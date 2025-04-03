@@ -8,6 +8,8 @@
 #include "matrix_ops.h"
 #include "benchmark.h"
 using std::cout;
+using std::cerr;
+using std::abs;
 using std::endl;
 using std::srand;
 using std::time;
@@ -19,28 +21,59 @@ void initialize_data(double* data, size_t size) {
     }
 }
 
+bool check_result(const char* test_name, const double* calculated, const double* expected, size_t size, double tolerance = 1e-9) {
+    for (size_t i = 0; i < size; ++i) {
+        if (abs(calculated[i] - expected[i]) > tolerance) {
+            cerr << "Test Failed: " << test_name << "\n";
+            cerr << "  Mismatch at index " << i << ": Calculated=" << calculated[i]
+                      << ", Expected=" << expected[i] << endl;
+            return false;
+        }
+    }
+    cout << "Test Passed: " << test_name << endl;
+    return true;
+}
+
 bool test_mv_row_major() {
-    cout << "\n--- Testing multiply_mv_row_major ---\n" << endl;
-    cout << "test_mv_row_major: Not implemented yet.\n" << endl;
-    return false; // Return true on success
+    cout << "\n--- Testing multiply_mv_row_major ---" << endl;
+    const int rows = 2;
+    const int cols = 3;
+    const double matrix_data[] = {1.0, 2.0, 3.0,  
+                                  4.0, 5.0, 6.0}; 
+    const double vector_data[] = {1.0, 2.0, 3.0};
+    const double expected_result[] = {14.0, 32.0}; // (1*1 + 2*2 + 3*3), (4*1 + 5*2 + 6*3)
+    double actual_result[rows]; 
+
+    bool success = true;
+    try {
+        multiply_mv_row_major(matrix_data, rows, cols, vector_data, actual_result);
+
+        success = check_result("multiply_mv_row_major correctness", actual_result, expected_result, rows);
+
+    } catch (const std::exception& e) {
+        cerr << "Test Failed: multiply_mv_row_major threw unexpected exception: " << e.what() << endl;
+        success = false;
+    }
+
+    return success;
 }
 
 bool test_mv_col_major() {
     cout << "\n--- Testing multiply_mv_col_major ---\n" << endl;
     cout << "test_mv_col_major: Not implemented yet.\n" << endl;
-    return false; // Return true on success
+    return true; 
 }
 
 bool test_mm_naive() {
     cout << "\n--- Testing multiply_mm_naive ---\n" << endl;
     cout << "test_mm_naive: Not implemented yet.\n" << endl;
-    return false; // Return true on success
+    return true; 
 }
 
 bool test_mm_transposed_b() {
     cout << "\n--- Testing multiply_mm_transposed_b ---\n" << endl;
     cout << "test_mm_transposed_b: Not implemented yet.\n" << endl;
-    return false; // Return true on success
+    return true; 
 }
 
 

@@ -15,7 +15,14 @@ void multiply_mv_row_major(const double* matrix, int rows, int cols, const doubl
     check_null(matrix, "matrix");
     check_null(vector, "vector");
     check_null(result, "result");
-    std::cerr << "multiply_mv_row_major: Not implemented yet.\n"; // Placeholder message
+    std::fill_n(result, rows, 0.0);
+    for(int i = 0; i < rows; ++i) {
+        double sum = 0.0;
+        for(int k = 0; k < cols; ++k) {
+            sum += matrix[i * cols + k] * vector[k];
+        }
+        result[i] = sum;
+    }
 }
 
 // Implemented by Team Member 2
@@ -24,6 +31,7 @@ void multiply_mv_col_major(const double* matrix, int rows, int cols, const doubl
     check_null(vector, "vector");
     check_null(result, "result");
     std::cerr << "multiply_mv_col_major: Not implemented yet.\n"; // Placeholder message
+    std::fill_n(result, rows, 0.0);
 }
 
 // Implemented by Team Member 3
@@ -35,6 +43,7 @@ void multiply_mm_naive(const double* matrixA, int rowsA, int colsA, const double
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication.");
     }
     std::cerr << "multiply_mm_naive: Not implemented yet.\n"; // Placeholder message
+    std::fill_n(result, rowsA * colsB, 0.0);
 }
 
 // Implemented by Team Member 4
@@ -46,6 +55,7 @@ void multiply_mm_transposed_b(const double* matrixA, int rowsA, int colsA, const
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication (A * B^T).");
     }
     std::cerr << "multiply_mm_transposed_b: Not implemented yet.\n"; // Placeholder message
+    std::fill_n(result, rowsA * colsB, 0.0);
 }
 
 // Implemented by the team collaboratively
@@ -57,4 +67,5 @@ void multiply_mm_optimized(const double* matrixA, int rowsA, int colsA, const do
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication.");
     }
     std::cerr << "multiply_mm_optimized: Not implemented yet.\n"; // Placeholder message
+    std::fill_n(result, rowsA * colsB, 0.0);
 }
