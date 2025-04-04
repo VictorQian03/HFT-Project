@@ -1,8 +1,8 @@
 #include "matrix_ops.h"
-#include <iostream> 
-#include <vector>   
-#include <stdexcept> 
-#include <cassert>   
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+#include <cassert>
 
 inline void check_null(const void* ptr, const char* name) {
     if (!ptr) {
@@ -47,15 +47,29 @@ void multiply_mm_naive(const double* matrixA, int rowsA, int colsA, const double
 }
 
 // Implemented by Team Member 4
-void multiply_mm_transposed_b(const double* matrixA, int rowsA, int colsA, const double* matrixB_transposed, int rowsB, int colsB, double* result) {
+void multiply_mm_transposed_b(const double* matrixA, int rowsA, int colsA, const double* matrixB_transposed, int rowsB_T, int colsB_T, double* result) {
     check_null(matrixA, "matrixA");
     check_null(matrixB_transposed, "matrixB_transposed");
     check_null(result, "result");
-    if (colsA != rowsB) { 
+
+    // assumes that matrixB_transposed is already the transpose of B when passed into this function,
+    // but because we want to compute AB, not AB_T, our dimension checking is different
+    if (colsA != colsB_T) {
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication (A * B^T).");
     }
-    std::cerr << "multiply_mm_transposed_b: Not implemented yet.\n"; // Placeholder message
-    std::fill_n(result, rowsA * colsB, 0.0);
+
+    std::fill_n(result, rowsA * rowsB_T, 0.0);
+
+    for (int i = 0; i < rowsA; ++i) {
+        for (int j = 0; j < rowsB_T; ++j) {
+            double sum = 0.0;
+            for (int k = 0; k < colsB_T; ++k) {  // colsA == colsB_T == rowsB
+                sum += matrixA[i * colsA + k] * matrixB_transposed[j * colsB_T + k];
+            }
+            result[i * rowsB_T + j] = sum;
+        }
+    }
+
 }
 
 // Implemented by the team collaboratively
