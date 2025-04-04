@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib> 
-#include <ctime>  
-#include <iomanip> 
-#include <memory> 
+#include <cstdlib>
+#include <ctime>
+#include <iomanip>
+#include <memory>
 
 #include "matrix_ops.h"
 #include "benchmark.h"
@@ -38,11 +38,11 @@ bool test_mv_row_major() {
     cout << "\n--- Testing multiply_mv_row_major ---" << endl;
     const int rows = 2;
     const int cols = 3;
-    const double matrix_data[] = {1.0, 2.0, 3.0,  
-                                  4.0, 5.0, 6.0}; 
+    const double matrix_data[] = {1.0, 2.0, 3.0,
+                                  4.0, 5.0, 6.0};
     const double vector_data[] = {1.0, 2.0, 3.0};
     const double expected_result[] = {14.0, 32.0}; // (1*1 + 2*2 + 3*3), (4*1 + 5*2 + 6*3)
-    double actual_result[rows]; 
+    double actual_result[rows];
 
     bool success = true;
     try {
@@ -61,19 +61,48 @@ bool test_mv_row_major() {
 bool test_mv_col_major() {
     cout << "\n--- Testing multiply_mv_col_major ---\n" << endl;
     cout << "test_mv_col_major: Not implemented yet.\n" << endl;
-    return true; 
+    return true;
 }
 
 bool test_mm_naive() {
     cout << "\n--- Testing multiply_mm_naive ---\n" << endl;
     cout << "test_mm_naive: Not implemented yet.\n" << endl;
-    return true; 
+    return true;
 }
 
 bool test_mm_transposed_b() {
     cout << "\n--- Testing multiply_mm_transposed_b ---\n" << endl;
-    cout << "test_mm_transposed_b: Not implemented yet.\n" << endl;
-    return true; 
+    const int rowsA = 3;
+    const int colsA = 3;
+    const int rowsB_T = 2;
+    const int colsB_T = 3;
+    const double matrixA[] = {
+        1.0, 2.0, 1.0,
+        0.0, 1.0, 0.0,
+        2.0, 3.0, 4.0
+    };
+    const double matrixB_T[] = {
+        2.0, 6.0, 1.0,
+        5.0, 7.0, 8.0
+    };
+    const double expected_res[] = {
+        15.0, 27.0,
+        6.0, 7.0,
+        26.0, 63.0
+    };
+    double actual_res[rowsA * rowsB_T];
+
+    bool success = true;
+    try {
+        multiply_mm_transposed_b(matrixA, rowsA, colsA, matrixB_T, rowsB_T, colsB_T, actual_res);
+        success = check_result("multiply_mm_transposed_b correctness", actual_res, expected_res, rowsA * rowsB_T);
+    }
+    catch (const std::exception& e) {
+        cerr << "Test Failed: multiply_mm_transposed_b threw unexpected exception: " << e.what() << endl;
+        success = false;
+    }
+
+    return success;
 }
 
 
