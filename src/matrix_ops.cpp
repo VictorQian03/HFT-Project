@@ -30,8 +30,14 @@ void multiply_mv_col_major(const double* matrix, int rows, int cols, const doubl
     check_null(matrix, "matrix");
     check_null(vector, "vector");
     check_null(result, "result");
-    std::cerr << "multiply_mv_col_major: Not implemented yet.\n"; // Placeholder message
+    
     std::fill_n(result, rows, 0.0);
+    for(int i = 0; i < cols; ++i) {
+        for(int j = 0; j < rows; ++j) {
+            result[j] += matrix[i*rows+j] * vector[i];
+        }
+
+    }
 }
 
 // Implemented by Team Member 3
