@@ -4,21 +4,64 @@
 #include <ctime>
 #include <iomanip>
 #include <memory>
+#include <random>
+#include <stdexcept>
+#include <functional>
+#include <string>
 
 #include "matrix_ops.h"
 #include "benchmark.h"
 using std::cout;
 using std::cerr;
+using std::vector;
+using std::tuple;
+using std::string;
 using std::abs;
 using std::endl;
 using std::srand;
 using std::time;
+using std::flush;
+using std::left;
+using std::setw;
+using std::right;
 
-void initialize_data(double* data, size_t size) {
-    if (!data) return;
-    for (size_t i = 0; i < size; ++i) {
-        data[i] = static_cast<double>(rand()) / RAND_MAX * 2.0 - 1.0; // Random values between -1.0 and 1.0
+vector<double> generate_random_vector(int size) {
+    if (size <= 0) {
+        throw std::invalid_argument("Vector size must be positive.");
     }
+    vector<double> vec(size);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> distrib(0.0, 1.0); 
+
+    for (int i = 0; i < size; ++i) {
+        vec[i] = distrib(gen);
+    }
+    return vec;
+}
+
+vector<double> generate_random_matrix(int rows, int cols) {
+    if (rows <= 0 || cols <= 0) {
+        throw std::invalid_argument("Matrix dimensions must be positive.");
+    }
+    return generate_random_vector(rows * cols); 
+}
+
+vector<double> transpose_matrix(const vector<double>& matrix, int rows, int cols) {
+    if (rows <= 0 || cols <= 0) {
+        throw std::invalid_argument("Matrix dimensions must be positive.");
+    }
+    if (matrix.size() != static_cast<size_t>(rows * cols)) {
+         throw std::invalid_argument("Matrix data size does not match dimensions.");
+    }
+
+    vector<double> transposed(cols * rows); 
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            transposed[j * rows + i] = matrix[i * cols + j];
+        }
+    }
+    return transposed;
 }
 
 bool check_result(const char* test_name, const double* calculated, const double* expected, size_t size, double tolerance = 1e-9) {
@@ -140,9 +183,121 @@ int main(int argc, char* argv[]) {
         cout << "\n=== All Correctness Tests Passed (Placeholders) ===\n" << endl;
     } else {
         cout << "\n=== Some Correctness Tests Failed (Placeholders) ===\n" << endl;
+        return 1;
     }
 
-    cout << "\n=== Program Finished ===\n" << endl;
+    cout << "\n=== Testing Program Finished ===\n" << endl;
+    const int num_runs = 10;
+    cout << "Starting benchmarks (" << num_runs << " runs per test):" << endl;
+
+    // Define test sizes: {rowsA, colsA (==rowsB), colsB}
+    vector<tuple<int, int, int>> test_sizes = {
+        {10, 10, 10},       
+        {100, 100, 100},   
+        {500, 500, 500},    
+        {1000, 1000, 1000}, 
+        {200, 50, 100},     
+        {50, 300, 80}      
+    };
+
+    vector<BenchmarkResult> results;
+    for (const auto& sizes : test_sizes) {
+        int rowsA = std::get<0>(sizes);
+        int colsA = std::get<1>(sizes); 
+        int rowsB = colsA;
+        int colsB = std::get<2>(sizes);
+
+        cout << "\nBenchmarking Size: A(" << rowsA << "x" << colsA << "), B(" << rowsB << "x" << colsB << ")" << endl;
+
+        try {
+            // --- Generate Data ---
+            vector<double> matrixA = generate_random_matrix(rowsA, colsA);
+            vector<double> matrixB = generate_random_matrix(rowsB, colsB);
+            vector<double> vector_in = generate_random_vector(colsA); 
+
+            // Result buffers
+            vector<double> result_mv(rowsA);
+            vector<double> result_mm(rowsA * colsB);
+
+            // --- Benchmark Matrix-Vector (Row Major) ---
+            cout << "  Benchmarking multiply_mv_row_major..." << flush;
+            auto func_mv_row = [&]() {
+                multiply_mv_row_major(matrixA.data(), rowsA, colsA, vector_in.data(), result_mv.data());
+            };
+            auto timing_mv_row = time_function_ms(func_mv_row, num_runs);
+            results.push_back({"multiply_mv_row_major", rowsA, colsA, 1, timing_mv_row.first, timing_mv_row.second, num_runs});
+            cout << " Done." << endl;
+
+             // --- Benchmark Matrix-Vector (Col Major) ---
+            cout << "  Benchmarking multiply_mv_col_major..." << flush;
+            vector<double> matrixA_col_major = transpose_matrix(matrixA, rowsA, colsA); 
+            auto func_mv_col = [&]() {
+                multiply_mv_col_major(matrixA_col_major.data(), rowsA, colsA, vector_in.data(), result_mv.data());
+            };
+            auto timing_mv_col = time_function_ms(func_mv_col, num_runs);
+            results.push_back({"multiply_mv_col_major", rowsA, colsA, 1, timing_mv_col.first, timing_mv_col.second, num_runs});
+            cout << " Done." << endl;
+
+            // --- Benchmark Matrix-Matrix (Naive) ---
+            cout << "  Benchmarking multiply_mm_naive..." << flush;
+            auto func_mm_naive = [&]() {
+                multiply_mm_naive(matrixA.data(), rowsA, colsA, matrixB.data(), rowsB, colsB, result_mm.data());
+            };
+            auto timing_mm_naive = time_function_ms(func_mm_naive, num_runs);
+            results.push_back({"multiply_mm_naive", rowsA, colsA, colsB, timing_mm_naive.first, timing_mm_naive.second, num_runs});
+            cout << " Done." << endl;
+
+            // --- Benchmark Matrix-Matrix (Transposed B) ---
+            cout << "  Benchmarking multiply_mm_transposed_b..." << flush;
+            vector<double> matrixB_T = transpose_matrix(matrixB, rowsB, colsB);
+            int rowsB_T = colsB;
+            int colsB_T = rowsB; 
+            auto func_mm_transposed = [&]() {
+                multiply_mm_transposed_b(matrixA.data(), rowsA, colsA, matrixB_T.data(), rowsB_T, colsB_T, result_mm.data());
+            };
+            auto timing_mm_transposed = time_function_ms(func_mm_transposed, num_runs);
+            results.push_back({"multiply_mm_transposed_b", rowsA, colsA, colsB, timing_mm_transposed.first, timing_mm_transposed.second, num_runs});
+            cout << " Done." << endl;
+
+            // --- Benchmark Matrix-Matrix (Optimized) ---
+            cout << "  Benchmarking multiply_mm_optimized..." << flush;
+            auto func_mm_optimized = [&]() {
+                multiply_mm_optimized(matrixA.data(), rowsA, colsA, matrixB.data(), rowsB, colsB, result_mm.data());
+            };
+            auto timing_mm_optimized = time_function_ms(func_mm_optimized, num_runs);
+            results.push_back({"multiply_mm_optimized", rowsA, colsA, colsB, timing_mm_optimized.first, timing_mm_optimized.second, num_runs});
+            cout << " Done." << endl;
+
+        } catch (const std::exception& e) {
+            cerr << "\nError during benchmarking for size ("
+                      << rowsA << "x" << colsA << " * " << rowsB << "x" << colsB << "): "
+                      << e.what() << endl;
+        }
+    }
+    cout << "\n--- Benchmarking Completed ---\n" << endl;
+
+    cout << "\n\n--- Benchmark Results (" << num_runs << " runs per test) ---\n";
+    cout << left << setw(28) << "Function"
+              << setw(8) << "RowsA"
+              << setw(8) << "ColsA"
+              << setw(8) << "ColsB"
+              << right << setw(15) << "Avg Time (ms)"
+              << setw(15) << "Std Dev (ms)"
+              << endl;
+    cout << string(81, '-') << endl; 
+
+    cout << std::fixed << std::setprecision(4); 
+
+    for (const auto& res : results) {
+        cout << left << setw(28) << res.name
+                  << setw(8) << res.rowsA
+                  << setw(8) << res.colsA
+                  << setw(8) << res.colsB
+                  << right << std::setw(15) << res.avg_time_ms
+                  << setw(15) << res.std_dev_ms
+                  << endl;
+    }
+    cout << string(81, '-') << endl;
 
     return 0;
 }
