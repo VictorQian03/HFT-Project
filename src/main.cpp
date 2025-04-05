@@ -59,9 +59,29 @@ bool test_mv_row_major() {
 }
 
 bool test_mv_col_major() {
-    cout << "\n--- Testing multiply_mv_col_major ---\n" << endl;
-    cout << "test_mv_col_major: Not implemented yet.\n" << endl;
-    return true;
+    cout << "\n--- Testing multiply_mv_col_major ---" << endl;
+    const int rows = 3;
+    const int cols = 2;
+    const double matrix_data[] = {
+        1.0, 2.0, 3.0, // First column
+        4.0, 5.0, 6.0  // Second column
+    }; // Correct column-major representation
+    const double vector_data[] = {1.0, 2.0}; // Vector to multiply
+    const double expected_result[] = {9.0, 12.0, 15.0}; //expected
+    double actual_result[rows];
+
+    bool success = true;
+    try {
+        multiply_mv_col_major(matrix_data, rows, cols, vector_data, actual_result);
+
+        success = check_result("multiply_mv_col_major correctness", actual_result, expected_result, rows);
+
+    } catch (const std::exception& e) {
+        cerr << "Test Failed: multiply_mv_col_major threw unexpected exception: " << e.what() << endl;
+        success = false;
+    }
+
+    return success;
 }
 
 bool test_mm_naive() {
