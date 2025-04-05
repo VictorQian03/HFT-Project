@@ -89,13 +89,36 @@ void multiply_mm_transposed_b(const double* matrixA, int rowsA, int colsA, const
 }
 
 // Implemented by the team collaboratively
-void multiply_mm_optimized(const double* matrixA, int rowsA, int colsA, const double* matrixB, int rowsB, int colsB, double* result /*, potentially other params like blockSize*/) {
+void multiply_mm_optimized(const double* matrixA, int rowsA, int colsA, const double* matrixB, int rowsB, int colsB, double* result)
+{
     check_null(matrixA, "matrixA");
     check_null(matrixB, "matrixB");
     check_null(result, "result");
      if (colsA != rowsB) {
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication.");
     }
-    std::cerr << "multiply_mm_optimized: Not implemented yet.\n"; // Placeholder message
+
     std::fill_n(result, rowsA * colsB, 0.0);
+
+    const int blockSize = 64;
+    // Iterate over blocks
+    for (int i0 = 0; i0 < rowsA; i0 += blockSize) {
+        for (int j0 = 0; j0 < colsB; j0 += blockSize) {
+            for (int k0 = 0; k0 < colsA; k0 += blockSize) {
+                int i_max = std::min(i0 + blockSize, rowsA);
+                int j_max = std::min(j0 + blockSize, colsB);
+                int k_max = std::min(k0 + blockSize, colsA);
+
+                // Perform multiplication for the current blocks using i, k, j loop order
+                for (int i = i0; i < i_max; ++i) {
+                    for (int k = k0; k < k_max; ++k) { 
+                        const double a_ik = matrixA[i * colsA + k];
+                        for (int j = j0; j < j_max; ++j) {
+                            result[i * colsB + j] += a_ik * matrixB[k * colsB + j];
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
