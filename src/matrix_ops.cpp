@@ -48,8 +48,18 @@ void multiply_mm_naive(const double* matrixA, int rowsA, int colsA, const double
     if (colsA != rowsB) {
         throw std::invalid_argument("Incompatible dimensions for matrix multiplication.");
     }
-    std::cerr << "multiply_mm_naive: Not implemented yet.\n"; // Placeholder message
+    
     std::fill_n(result, rowsA * colsB, 0.0);
+
+    for (int i=0; i<rowsA; ++i){
+        for (int j=0; j<colsB; ++j){
+            double sum = 0.;
+            for (int k=0; k<colsA; ++k){
+                sum += matrixA[i*colsA + k] * matrixB[k*colsA + j];
+            }
+            result[i*colsB + j] = sum;
+        }
+    }
 }
 
 // Implemented by Team Member 4
