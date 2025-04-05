@@ -55,7 +55,7 @@ void multiply_mm_naive(const double* matrixA, int rowsA, int colsA, const double
         for (int j=0; j<colsB; ++j){
             double sum = 0.;
             for (int k=0; k<colsA; ++k){
-                sum += matrixA[i*colsA + k] * matrixB[k*colsA + j];
+                sum += matrixA[i*colsA + k] * matrixB[k*colsB + j]; // access for matrixB is very inefficient
             }
             result[i*colsB + j] = sum;
         }
