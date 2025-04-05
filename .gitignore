@@ -2,3 +2,5 @@
 .vscode/
 build/
 matrix_app_rel
+matrix_app_dbg
+matrix_app_prof
