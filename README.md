@@ -1,6 +1,8 @@
 # HFT-Project
 FINM 32700 Group Project
-Victor Qian, Amy Wang, Jonathan Ran, Robert Xing
+
+Team members: Victor Qian (1), Amy Wang (2), Jonathan Ran (3), Robert Xing (4)
+
 Phase 1 Discussion Questions:
 
 1. A pointer is a variable that stores the memory address of another object, while a reference is an alias or an alternative name for an existing object. A pointer can be uninitialized (though dangerous and a bad practice) or initialized later, but a reference must be initialized when declared and cannot be null. A pointer can be reassigned to point to a different object's address later, but a reference cannot be reassigned to refer to a different object after initialization.
