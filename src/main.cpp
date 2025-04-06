@@ -11,6 +11,7 @@
 
 #include "matrix_ops.h"
 #include "benchmark.h"
+#include "alignment.h"
 using std::cout;
 using std::cerr;
 using std::vector;
@@ -25,27 +26,41 @@ using std::left;
 using std::setw;
 using std::right;
 
-vector<double> generate_random_vector(int size) {
+template <typename T>
+using AlignedVector = std::vector<T, AlignedAllocator<T, 64>>;
+
+vector<double> generate_random_vector(int size, bool aligned = false) {
     if (size <= 0) {
         throw std::invalid_argument("Vector size must be positive.");
     }
-    vector<double> vec(size);
+
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> distrib(0.0, 1.0); 
 
-    for (int i = 0; i < size; ++i) {
-        vec[i] = distrib(gen);
+    if (aligned) {
+        AlignedVector<double> vec(size);
+        for (int i = 0; i < size; ++i) {
+            vec[i] = distrib(gen);
+        }
+        // Copy to std::vector to match function signature
+        return std::vector<double>(vec.begin(), vec.end());
+    } else {
+        std::vector<double> vec(size);
+        for (int i = 0; i < size; ++i) {
+            vec[i] = distrib(gen);
+        }
+        return vec;
     }
-    return vec;
 }
 
-vector<double> generate_random_matrix(int rows, int cols) {
+vector<double> generate_random_matrix(int rows, int cols, bool aligned = false) {
     if (rows <= 0 || cols <= 0) {
         throw std::invalid_argument("Matrix dimensions must be positive.");
     }
-    return generate_random_vector(rows * cols); 
+    return generate_random_vector(rows * cols, aligned);
 }
+
 
 vector<double> transpose_matrix(const vector<double>& matrix, int rows, int cols) {
     if (rows <= 0 || cols <= 0) {
@@ -200,6 +215,8 @@ int main(int argc, char* argv[]) {
         {50, 300, 80}      
     };
 
+    bool align = false;
+
     vector<BenchmarkResult> results;
     for (const auto& sizes : test_sizes) {
         int rowsA = std::get<0>(sizes);
@@ -211,9 +228,9 @@ int main(int argc, char* argv[]) {
 
         try {
             // --- Generate Data ---
-            vector<double> matrixA = generate_random_matrix(rowsA, colsA);
-            vector<double> matrixB = generate_random_matrix(rowsB, colsB);
-            vector<double> vector_in = generate_random_vector(colsA); 
+            vector<double> matrixA = generate_random_matrix(rowsA, colsA, align);
+            vector<double> matrixB = generate_random_matrix(rowsB, colsB, align);
+            vector<double> vector_in = generate_random_vector(colsA, align); 
 
             // Result buffers
             vector<double> result_mv(rowsA);
@@ -294,7 +311,9 @@ int main(int argc, char* argv[]) {
     }
     cout << "\n--- Benchmarking Completed ---\n" << endl;
 
-    cout << "\n\n--- Benchmark Results (" << num_runs << " runs per test) ---\n";
+    string align_str = align ? "memory-aligned:":"non-memory-aligned:";
+
+    cout << "\n\n--- Benchmark Results (" <<align_str<< " " << num_runs << " runs per test) ---\n";
     cout << left << setw(28) << "Function"
               << setw(8) << "RowsA"
               << setw(8) << "ColsA"
