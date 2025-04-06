@@ -144,8 +144,38 @@ bool test_mv_col_major() {
 
 bool test_mm_naive() {
     cout << "\n--- Testing multiply_mm_naive ---\n" << endl;
-    cout << "test_mm_naive: Not implemented yet.\n" << endl;
-    return true;
+    const int rowsA = 3;
+    const int colsA = 3;
+    const int rowsB = 3;
+    const int colsB = 2;
+    const double matrixA[] = {
+        1.0, 2.0, 1.0,
+        0.0, 1.0, 0.0,
+        2.0, 3.0, 4.0
+    };
+    const double matrixB[] = {
+        2.0, 5.0,
+        6.0, 7.0,
+        1.0, 8.0
+    };
+    const double expected_res[] = {
+        15.0, 27.0,
+        6.0, 7.0,
+        26.0, 63.0
+    };
+    double actual_res[rowsA * colsB];
+
+    bool success = true;
+    try {
+        multiply_mm_naive(matrixA, rowsA, colsA, matrixB, rowsB, colsB, actual_res);
+        success = check_result("multiply_mm_naive correctness", actual_res, expected_res, rowsA * colsB);
+    }
+    catch (const std::exception& e) {
+        cerr << "Test Failed: multiply_mm_naive threw unexpected exception: " << e.what() << endl;
+        success = false;
+    }
+
+    return success;
 }
 
 bool test_mm_transposed_b() {
@@ -183,6 +213,41 @@ bool test_mm_transposed_b() {
     return success;
 }
 
+bool test_mm_optimized() {
+    cout << "\n--- Testing multiply_mm_optimized ---\n" << endl;
+    const int rowsA = 3;
+    const int colsA = 3;
+    const int rowsB = 3;
+    const int colsB = 2;
+    const double matrixA[] = {
+        1.0, 2.0, 1.0,
+        0.0, 1.0, 0.0,
+        2.0, 3.0, 4.0
+    };
+    const double matrixB[] = {
+        2.0, 5.0,
+        6.0, 7.0,
+        1.0, 8.0
+    };
+    const double expected_res[] = {
+        15.0, 27.0,
+        6.0, 7.0,
+        26.0, 63.0
+    };
+    double actual_res[rowsA * colsB];
+
+    bool success = true;
+    try {
+        multiply_mm_optimized(matrixA, rowsA, colsA, matrixB, rowsB, colsB, actual_res);
+        success = check_result("multiply_mm_optimized correctness", actual_res, expected_res, rowsA * colsB);
+    }
+    catch (const std::exception& e) {
+        cerr << "Test Failed: multiply_mm_optimized threw unexpected exception: " << e.what() << endl;
+        success = false;
+    }
+
+    return success;
+}
 
 int main(int argc, char* argv[]) {
     srand(static_cast<unsigned int>(time(nullptr)));
@@ -193,11 +258,12 @@ int main(int argc, char* argv[]) {
     all_tests_passed &= test_mv_col_major();
     all_tests_passed &= test_mm_naive();
     all_tests_passed &= test_mm_transposed_b();
+    all_tests_passed &= test_mm_optimized();
 
     if (all_tests_passed) {
-        cout << "\n=== All Correctness Tests Passed (Placeholders) ===\n" << endl;
+        cout << "\n=== All Correctness Tests Passed ===\n" << endl;
     } else {
-        cout << "\n=== Some Correctness Tests Failed (Placeholders) ===\n" << endl;
+        cout << "\n=== Some Correctness Tests Failed ===\n" << endl;
         return 1;
     }
 
