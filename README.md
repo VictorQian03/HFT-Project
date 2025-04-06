@@ -1,5 +1,6 @@
 # HFT-Project
 FINM 32700 Group Project
+Victor Qian, Amy Wang, Jonathan Ran, Robert Xing
 Phase 1 Discussion Questions:
 
 1. A pointer is a variable that stores the memory address of another object, while a reference is an alias or an alternative name for an existing object. A pointer can be uninitialized (though dangerous and a bad practice) or initialized later, but a reference must be initialized when declared and cannot be null. A pointer can be reassigned to point to a different object's address later, but a reference cannot be reassigned to refer to a different object after initialization.
@@ -30,7 +31,7 @@ Spatial locality is primarily exploited by the i, k, j loop order used within th
 
 4. Memory alignment is the practice of organizing data in memory such that the data's memory address is a multiple of its size. For example, in a 64-bit machine, a double is 8-bytes, and so should be stored at a multiple of 8 in memory. Since the CPU pulls memory in chunks, this guarantees that this data can be pulled in one operation, whereas unaligned data in memory may require multiple operations. For example, an 8-byte double stored at address 62, another block of memory would need to be read to access this, whereas if it were stored at 60 or 64, only one block is needed. Additionally, since most cache-lines are 64-bytes, a 64-byte alignment will reduce the frequency of cache misses.
 
-When implemented, we did not observe a significant difference in performance bewteen aligned and non-aligned memory. We observed a few small speedups in performance when working in large dimensions (e.g. 1000 x 1000); however, the variance of the performance times means this difference was not statistically significant. We suspect this was the case due to our -O3 compiler optimization, which may implicitly do some memory alignment on its own. Additionally, memory alignment may actually hurt performance, 
+When implemented, we did not observe a significant difference in performance bewteen aligned and non-aligned memory. We observed a few small speedups in performance when working in large dimensions (e.g. 1000 x 1000); however, the variance of the performance times means this difference was not statistically significant. We suspect this was the case due to our -O3 compiler optimization, which may implicitly do some memory alignment on its own. Additionally, memory alignment may actually hurt performance,
 
 
 
