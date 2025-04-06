@@ -28,10 +28,17 @@ The multiply_mm_optimized function employs blocking combined with loop reorderin
 
 Spatial locality is primarily exploited by the i, k, j loop order used within the block computation, combined with the row-major storage of the matrices. In the i, k, j inner loop structure, the innermost loop iterates over j (columns of C and B). For a fixed i and k, the access result[i * colsB + j] steps sequentially through memory within a row of C. The access matrixB[k * colsB + j] also steps sequentially through memory within a row of B. The access matrixA[i * colsA + k] remains constant during this innermost loop, so it stays in the register or the fastest cache level. This sequential access pattern for both B and C within the innermost loop is highly cache-friendly and maximizes the utilization of each cache line fetched for B and C. This contrasts with the naive i, j, k implementation where the access matrixB[k * colsB + j] in the innermost loop jumps by colsB elements for each increment of k, which has poor spatial locality because of strided access. The blocking ensures we are working on sections of rows small enough to benefit from this sequential access pattern before moving to the next k or i. 
 
-4. To write soon...
+4. Memory alignment is the practice of organizing data in memory such that the data's memory address is a multiple of its size. For example, in a 64-bit machine, a double is 8-bytes, and so should be stored at a multiple of 8 in memory. Since the CPU pulls memory in chunks, this guarantees that this data can be pulled in one operation, whereas unaligned data in memory may require multiple operations. For example, an 8-byte double stored at address 62, another block of memory would need to be read to access this, whereas if it were stored at 60 or 64, only one block is needed. Additionally, since most cache-lines are 64-bytes, a 64-byte alignment will reduce the frequency of cache misses.
+
+When implemented, we did not observe a significant difference in performance bewteen aligned and non-aligned memory. We observed a few small speedups in performance when working in large dimensions (e.g. 1000 x 1000); however, the variance of the performance times means this difference was not statistically significant. We suspect this was the case due to our -O3 compiler optimization, which may implicitly do some memory alignment on its own. Additionally, memory alignment may actually hurt performance, 
+
+
 
 5. we only have one inline function implemented in the matrix_ops.cpp file, which is to check if the pointers are null values. using the benchmark results (check pdf for optimized function with inline or no), we can conclude that inlining has improved performance in general. however, when we run the code for bigger matrixes, the function using no inline is faster. this could be due to code bloat, as excessive inlining can inflate the binary size. A bigger binary can increase instruction-cache pressure, which, in extreme cases, may hurt performance.
 
+
 6. Our initial implementations faced significant performance bottlenecks due to poor cache locality, particularly when accessing matrixB in its original row-major format. Profiling results revealed that a large portion of the execution time was spent in the innermost loop, where non-contiguous memory accesses led to frequent cache misses. This insight has guided our optimization efforts toward rethinking the data access patterns. To mitigate this, we implemented a blocking (tiling) strategy that divided the matrices into smaller sub-blocks. This approach allowed us to work with data that fits into the processor's cache, thereby reducing cache misses and improving data reuse.
+
+
 
 7. To reflect soon...
