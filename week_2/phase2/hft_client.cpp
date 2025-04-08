@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <deque>
 
 using namespace std;
 
@@ -18,6 +19,8 @@ void receiveAndRespond(int socketFd, const string& name) {
 
     // Send client name
     send(socketFd, name.c_str(), name.size(), 0);
+
+    std::deque<float> priceHistory;
 
     while (true) {
         memset(buffer, 0, BUFFER_SIZE);
@@ -37,16 +40,56 @@ void receiveAndRespond(int socketFd, const string& name) {
         int priceId = stoi(data.substr(0, commaPos));
         float price = stof(data.substr(commaPos + 1));
 
+        if (priceHistory.size() >= 3)
+            priceHistory.pop_front();
+        priceHistory.push_back(price);
+
         cout << "📥 Received price ID: " << priceId << ", Value: " << price << endl;
 
         // Simulate reaction delay
         this_thread::sleep_for(chrono::milliseconds(100 + rand() % 300));
 
-        // Send order (price ID)
-        string order = to_string(priceId);
-        send(socketFd, order.c_str(), order.length(), 0);
+        int direction = 0;
 
-        cout << "📤 Sent order for price ID: " << priceId << endl;
+        // very simplistic momentum, with no exit criteria
+        if (priceHistory.size() == 3) {
+            float a = priceHistory[0];
+            float b = priceHistory[1];
+            float c = priceHistory[2];
+        
+            bool up = (a < b) && (b < c);
+            bool down = (a > b) && (b > c);
+            
+            // direction doesn't actually matter 
+            if (up) {
+                direction = 1;
+            }
+            else if (down){
+                direction = -1;
+            }
+            else {
+                direction = 0;
+            }
+        }
+
+        // Send order (price ID)
+        if (direction == 0){
+           cout << "No momentum. Ignoring price ID " << priceId << endl;
+        }
+        else {
+            string order = to_string(priceId);
+            send(socketFd, order.c_str(), order.length(), 0);
+
+            string side;
+            if (direction > 0){
+                side = "buy";
+            }
+            else {
+                side = "sell";
+            }
+
+            cout << "📤 Sent " << side << " order for price ID: " << priceId << endl;
+        }
     }
 
     close(socketFd);
