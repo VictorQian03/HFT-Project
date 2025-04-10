@@ -22,85 +22,62 @@ void TradeEngine::process() {
     for (const auto& tick : market_data) {
         updateHistory(tick);
 
-        std::vector<std::string> buy_signals_triggered;
-        std::vector<std::string> sell_signals_triggered;
+        int buy_votes = 0;
+        int sell_votes = 0;
+        std::vector<std::string> contributing_buy_signals;
+        std::vector<std::string> contributing_sell_signals;
 
-        // 1: Evaluate all signals and collect triggers
+        // 1: Evaluate all signals and count votes
         SignalAction action1 = evaluateSignal1(tick);
         if (action1 == SignalAction::BUY) {
-            buy_signals_triggered.push_back("Signal 1 (Low Threshold)");
+            buy_votes++;
+            contributing_buy_signals.push_back("Signal 1 (Low Threshold)");
         } else if (action1 == SignalAction::SELL) {
-            sell_signals_triggered.push_back("Signal 1 (High Threshold)");
+            sell_votes++;
+            contributing_sell_signals.push_back("Signal 1 (High Threshold)");
         }
 
         SignalAction action2 = evaluateSignal2(tick);
         if (action2 == SignalAction::BUY) {
-            buy_signals_triggered.push_back("Signal 2 (Below Avg)");
+            buy_votes++;
+            contributing_buy_signals.push_back("Signal 2 (Below Avg)");
         } else if (action2 == SignalAction::SELL) {
-            sell_signals_triggered.push_back("Signal 2 (Above Avg)");
+            sell_votes++;
+            contributing_sell_signals.push_back("Signal 2 (Above Avg)");
         }
 
         SignalAction action3 = evaluateSignal3(tick);
         if (action3 == SignalAction::BUY) {
-            buy_signals_triggered.push_back("Signal 3 (Momentum)");
+            buy_votes++;
+            contributing_buy_signals.push_back("Signal 3 (Momentum)");
         }
 
-        // 2: Determine if BUY and/or SELL occurred
-        bool buy_triggered = !buy_signals_triggered.empty();
-        bool sell_triggered = !sell_signals_triggered.empty();
-
-        // 3: Final Arbitration and Order Placement
-        if (buy_triggered && sell_triggered) {
-            // Case 1: Both BUY and SELL signals triggered for this tick. Randomly choose one direction.
-            std::string selected_buy_signal;
-            if (buy_signals_triggered.size() == 1) {
-                selected_buy_signal = buy_signals_triggered[0];
+        // 2: Apply Voting Consensus
+        if (buy_votes > sell_votes) {
+            // Consensus is BUY: Place one BUY order
+            std::string selected_signal;
+            // Choose one of the contributing buy signals randomly for attribution
+            if (contributing_buy_signals.size() == 1) {
+                selected_signal = contributing_buy_signals[0];
             } else {
-                std::uniform_int_distribution<> buy_distrib(0, buy_signals_triggered.size() - 1);
-                selected_buy_signal = buy_signals_triggered[buy_distrib(random_generator)];
+                std::uniform_int_distribution<> distrib(0, contributing_buy_signals.size() - 1);
+                selected_signal = contributing_buy_signals[distrib(random_generator)];
             }
+            placeOrder(tick, true, selected_signal); 
 
-            std::string selected_sell_signal;
-             if (sell_signals_triggered.size() == 1) {
-                selected_sell_signal = sell_signals_triggered[0];
+        } else if (sell_votes > buy_votes) {
+            // Consensus is SELL: Place one SELL order
+            std::string selected_signal;
+            // Choose one of the contributing sell signals randomly for attribution
+             if (contributing_sell_signals.size() == 1) {
+                selected_signal = contributing_sell_signals[0];
             } else {
-                std::uniform_int_distribution<> sell_distrib(0, sell_signals_triggered.size() - 1);
-                selected_sell_signal = sell_signals_triggered[sell_distrib(random_generator)];
+                std::uniform_int_distribution<> distrib(0, contributing_sell_signals.size() - 1);
+                selected_signal = contributing_sell_signals[distrib(random_generator)];
             }
+            placeOrder(tick, false, selected_signal); 
 
-            std::uniform_int_distribution<> direction_choice(0, 1); 
-            if (direction_choice(random_generator) == 0) {
-                placeOrder(tick, true, selected_buy_signal);
-            } else {
-                placeOrder(tick, false, selected_sell_signal);
-            }
-
-        } else if (buy_triggered) {
-            // Case 2: Only BUY signals triggered. Place one BUY order.
-            std::string selected_buy_signal;
-            if (buy_signals_triggered.size() == 1) {
-                selected_buy_signal = buy_signals_triggered[0];
-            } else {
-                // Multiple BUY signals, choose one randomly
-                std::uniform_int_distribution<> distrib(0, buy_signals_triggered.size() - 1);
-                selected_buy_signal = buy_signals_triggered[distrib(random_generator)];
-            }
-            placeOrder(tick, true, selected_buy_signal);
-
-        } else if (sell_triggered) {
-            // Case 3: Only SELL signals triggered. Place one SELL order.
-            std::string selected_sell_signal;
-            if (sell_signals_triggered.size() == 1) {
-                selected_sell_signal = sell_signals_triggered[0];
-            } else {
-                // Multiple SELL signals, choose one randomly
-                std::uniform_int_distribution<> distrib(0, sell_signals_triggered.size() - 1);
-                selected_sell_signal = sell_signals_triggered[distrib(random_generator)];
-            }
-            placeOrder(tick, false, selected_sell_signal);
         }
-        // Else: Neither buy_triggered nor sell_triggered is true, so do nothing.
-
     } 
 }
 
