@@ -1,0 +1,4 @@
+# Strategy Explanation
+The decision logic for this strategy is based on analyzing short-term price trends using two really simple patterns. The logic evaluates a sequence of three consecutive price points in the (`priceHistory`) to determine if there is a consistent upward or downward trend. Specifically, it checks if the prices are strictly increasing (`a < b && b < c`) or strictly decreasing (`a > b && b > c`). 
+
+In the strictly increasing case, we detect upward momentum, so we'll send a buy order to the server. In the strictly decreasing case, we detect downward momentum, so the strategy will use this as a sell signal to send a sell order.

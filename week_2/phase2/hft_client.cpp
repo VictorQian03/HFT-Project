@@ -16,6 +16,8 @@ using namespace std;
 
 void receiveAndRespond(int socketFd, const string& name) {
     char buffer[BUFFER_SIZE];
+    int totalOrders=0;
+    int successfulOrders=0;
 
     // Send client name
     send(socketFd, name.c_str(), name.size(), 0);
@@ -89,6 +91,12 @@ void receiveAndRespond(int socketFd, const string& name) {
             }
 
             cout << "📤 Sent " << side << " order for price ID: " << priceId << endl;
+            totalOrders++;
+            successfulOrders++;
+            double hitPercentage = (static_cast<double>(successfulOrders) / totalOrders) * 100.0;
+            cout << "✅ Orders hit: " << successfulOrders << "/" << totalOrders
+             << " (" << hitPercentage << "%)" << endl;
+
         }
     }
 
