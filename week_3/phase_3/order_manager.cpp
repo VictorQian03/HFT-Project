@@ -1,6 +1,3 @@
-//
-// Created by Amy Wang on 4/14/25.
-//
 
 #include "order_manager.h"
 

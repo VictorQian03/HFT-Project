@@ -1,8 +1,6 @@
 
 #ifndef ORDER_MANAGER_H
 #define ORDER_MANAGER_H
-
-using namespace std;
 #include <map>
 
 enum class OrderStatus { New, Filled, PartiallyFilled, Cancelled };
