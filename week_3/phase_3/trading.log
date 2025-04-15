@@ -1,0 +1,16 @@
+Logger initialized
+[Market] Best Bid: 100.10x300
+[Market] Best Ask: 100.20x250
+[Market] Best Bid: 100.15x200
+[Market] Best Ask: 100.18x100
+[Market] Best Ask: 100.18 Updated with quantity: 60
+[Market] Bid: 100.10 Removed
+[Market] Best Ask: 100.18 Updated with quantity: 30
+[Market] Best Ask: 100.18 Removed
+[Market] Now Best Ask is: 100.20
+[Market] New Ask: 100.25x200
+[Market] Best Bid: 100.17x100
+[Market] Bid: 100.15 Updated with quantity: 100
+[Market] New Ask: 100.22x150
+[Market] Best Bid: 100.20x300
+[Market] New Ask: 100.23x100
