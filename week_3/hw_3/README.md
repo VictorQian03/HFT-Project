@@ -1,4 +1,4 @@
-# Part 5:
+# Part 5 Response:
 
 1. The three biggest risks are memory leaks, dangling pointers, and double-free errors. Failing to release allocated memory can exhaust available resources over time; accessing references to freed memory may lead to undefined behavior; and releasing the same memory more than once can corrupt the program's state and cause a segmentation fault. 
 
