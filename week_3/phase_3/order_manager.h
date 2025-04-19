@@ -19,12 +19,12 @@ struct MyOrder {
 class OrderManager {
 public:
     OrderManager();
-    int place_order(const std::string& symbol, double price, int quantity);
-    void cancel_order(int order_id);
-    void handle_fill(int order_id, int fill_quantity);
-    void print_status() const;
+    int place_order(Side side, double price, int qty);
+    void cancel(int id);
+    void handle_fill(int id, int filled_qty);
+    void print_active_orders() const;
 private:
-    std::unordered_map<int, std::unique_ptr<MyOrder>> orders;
+    std::map<int, std::unique_ptr<MyOrder>> orders;
 };
 
 #endif
