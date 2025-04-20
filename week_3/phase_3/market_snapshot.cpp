@@ -67,10 +67,10 @@ void MarketSnapshot::update_bid(double price, int qty) {
 
 void MarketSnapshot::update_ask(double price, int qty) {
     auto it = asks.find(price);
-    if (it != asks.end()) {  // it is an existing bid, can be removed or updated
-        bool is_best_ask = (it == asks.begin());  // Check if it was the best bid before modification
+    if (it != asks.end()) {  // it is an existing ask, can be removed or updated
+        bool is_best_ask = (it == asks.begin());  // Check if it was the best ask before modification
         if (qty == 0) {
-            asks.erase(it);  // Remove bid
+            asks.erase(it);  // Remove ask
             if (is_best_ask) {
                 Logger::get_instance()->log("[Market] Best Ask: " + format_price(price) + " Removed");
 
@@ -90,7 +90,7 @@ void MarketSnapshot::update_ask(double price, int qty) {
         // New ask
         asks[price] = std::make_unique<PriceLevel>(price, qty);
 
-        // Check if this is the best bid (either first bid or better than current best)
+        // Check if this is the best ask (either first ask or better than current best)
         if (asks.size() == 1 || price == asks.begin()->first) {
 
             Logger::get_instance()->log("[Market] Best Ask: " + format_price(price) + "x" + std::to_string(qty));

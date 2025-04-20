@@ -2,15 +2,48 @@ Logger initialized
 [Market] Best Bid: 100.10x300
 [Market] Best Ask: 100.20x250
 [Market] Best Bid: 100.15x200
+Placed Order ID 1
+Order 1: Price=100.15, Quantity=200, Filled=0, Status=0
 [Market] Best Ask: 100.18x100
+Placed Order ID 2
+Order 1: Price=100.15, Quantity=200, Filled=0, Status=0
+Order 2: Price=100.18, Quantity=100, Filled=0, Status=0
 [Market] Best Ask: 100.18 Updated with quantity: 60
+Order ID 2 successfully cancelled
+Placed Order ID 3
 [Market] Bid: 100.10 Removed
+Order 1: Price=100.15, Quantity=200, Filled=0, Status=0
+Order 3: Price=100.18, Quantity=60, Filled=0, Status=0
 [Market] Best Ask: 100.18 Updated with quantity: 30
+Order ID 3 successfully cancelled
+Placed Order ID 4
 [Market] Best Ask: 100.18 Removed
-[Market] Now Best Ask is: 100.20
+Order ID 4 successfully cancelled
 [Market] New Ask: 100.25x200
+Order 1: Price=100.15, Quantity=200, Filled=0, Status=0
+Order ID 1 partially filled
+Order 1: Price=100.15, Quantity=200, Filled=10, Status=2
+Order ID 1 partially filled
+Order 1: Price=100.15, Quantity=200, Filled=30, Status=2
 [Market] Best Bid: 100.17x100
+Placed Order ID 5
+Order 1: Price=100.15, Quantity=200, Filled=30, Status=2
+Order 5: Price=100.17, Quantity=100, Filled=0, Status=0
+Order ID 5 partially filled
+Order 1: Price=100.15, Quantity=200, Filled=30, Status=2
+Order 5: Price=100.17, Quantity=100, Filled=50, Status=2
 [Market] Bid: 100.15 Updated with quantity: 100
+Order ID 1 successfully cancelled
+Placed Order ID 6
 [Market] New Ask: 100.22x150
+Order 5: Price=100.17, Quantity=100, Filled=50, Status=2
+Order 6: Price=100.15, Quantity=100, Filled=0, Status=0
+Order ID 5 fully filled
+Order 6: Price=100.15, Quantity=100, Filled=0, Status=0
 [Market] Best Bid: 100.20x300
+Placed Order ID 7
+Order 6: Price=100.15, Quantity=100, Filled=0, Status=0
+Order 7: Price=100.2, Quantity=300, Filled=0, Status=0
 [Market] New Ask: 100.23x100
+Order 6: Price=100.15, Quantity=100, Filled=0, Status=0
+Order 7: Price=100.2, Quantity=300, Filled=0, Status=0

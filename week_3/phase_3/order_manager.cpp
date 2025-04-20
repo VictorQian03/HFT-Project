@@ -35,7 +35,7 @@ void OrderManager::cancel(int id) {
     }
 }
 
-void OrderManager::handle_fill(int id, int filled_quantity) { 
+void OrderManager::handle_fill(int id, int filled_quantity) {
     if (orders.count(id) > 0) {
         orders[id]->filled += filled_quantity;
         if (orders[id]->filled >= orders[id]->quantity){
@@ -52,6 +52,26 @@ void OrderManager::handle_fill(int id, int filled_quantity) {
     else {
         Logger::get_instance()->log("Order ID " + std::to_string(id) + " not found");
     }
+}
+
+bool OrderManager::resolved_conflicts(Side side, double price, int quantity) {
+    std::vector<int> orders_to_cancel;
+
+    for (const auto& entry : orders) {
+        int id = entry.first;
+        const auto& order = entry.second;
+        if (order->side == side && order->price == price) {
+            orders_to_cancel.push_back(id);
+        }
+    }
+    for (int id : orders_to_cancel) {
+        OrderManager::cancel(id);
+    }
+    if (orders_to_cancel.size() > 0 && quantity > 0) {
+        OrderManager::place_order(side, price, quantity);
+    }
+
+    return orders_to_cancel.size() > 0;
 }
 
 void OrderManager::print_active_orders() const {

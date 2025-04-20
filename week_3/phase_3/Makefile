@@ -33,7 +33,7 @@ $(OBJDIR)/%.o: %.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(OPTFLAGS_TARGET) -c $< -o $@
 
 # Debug build (-O0)
-debug: OPTFLAGS_TARGET = -O0 -g
+debug: OPTFLAGS_TARGET = -O0 -g -fsanitize=address
 debug: $(EXEC_DBG)
 	@echo "Running Debug Build ($(EXEC_DBG))..."
 	./$(EXEC_DBG) debug 256 5 # Pass build type, N, runs

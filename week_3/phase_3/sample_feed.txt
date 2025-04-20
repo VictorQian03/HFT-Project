@@ -2,25 +2,25 @@
 BID 100.10 300
 ASK 100.20 250
 
-# New bid comes in at a better price
+# New bid comes in at a better price ; Order 1 placed
 BID 100.15 200
 
-# Ask gets updated to a better price
+# Ask gets updated to a better price ; Order 2 placed
 ASK 100.18 100
 
-# Partial quantity removed from top ask
+# Partial quantity removed from top ask ; Order 2 cancelled, Order 3 placed
 ASK 100.18 60
 
 # Bid at 100.10 disappears (canceled or filled)
 BID 100.10 0
 
-# Ask quantity reduced again
+# Ask quantity reduced again ; Order 3 cancelled, Order 4 placed
 ASK 100.18 30
 
-# Ask completely gone
+# Ask completely gone ; Order 4 cancelled
 ASK 100.18 0
 
-# New ask comes in higher
+# New ask comes in higher ; wait
 ASK 100.25 200
 
 # Strategy places an order (we assume ID = 1)
@@ -30,24 +30,24 @@ ASK 100.25 200
 EXECUTION 1 10
 EXECUTION 1 20
 
-# New bid comes in
+# New bid comes in ; Order 5 placed
 BID 100.17 100
 
-# Another strategy order placed (assume ID = 2)
+# Another strategy order placed (assume ID = 5)
 
 # Fill for that new order
-EXECUTION 2 50
+EXECUTION 5 50
 
-# Bid at 100.15 reduced in quantity
+# Bid at 100.15 reduced in quantity ; Order 1 cancelled, Order 6 placed
 BID 100.15 100
 
 # Ask comes in at a new level
 ASK 100.22 150
 
 # Execution that completes an order fully
-EXECUTION 2 50
+EXECUTION 5 50
 
-# New top bid
+# New top bid ; Order 7 placed
 BID 100.20 300
 
 # Final snapshot change
