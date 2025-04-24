@@ -1,6 +1,7 @@
 
 
 #include <iostream>
+#include <iterator>
 #include "metaprogramming.h"
 #include "constexpr_math.h"
 #include "StaticVector.h"
@@ -11,6 +12,7 @@ struct Order {
     int    id;
     double price;
     int    qty;
+    Order(int i = 0, double p = 0.0, int q = 0) : id(i), price(p), qty(q) {}
     friend std::ostream& operator<<(std::ostream& os, const Order& o) {
         return os << "Order{id=" << o.id << ", price=" << o.price << ", qty=" << o.qty << "}";
     }
@@ -54,19 +56,18 @@ int main() {
          it != orders.end();
          it  = find_if(std::next(it), orders.end(), price_gt_100))
     {
-        std::cout << "Order id " << (*it).id << " with prices "<<(*it).price<< '\n';   // <-- now compiles
+        std::cout << "Order id " << (*it).id << " with prices "<<(*it).price<< '\n';  
     }
 
     auto qtydivisibleby10 = [](const Order& o){ return o.qty % 10==0; };
-    auto it = find_if(orders.begin(), orders.end(), qtydivisibleby10);
-    std::cout << "first Order with quantity divisible by 10:\n";
-    {
-        std::cout << "Order id " << (*it).id << " with quantity "<<(*it).qty<< '\n';   // <-- now compiles
+    auto it2 = find_if(orders.begin(), orders.end(), qtydivisibleby10);
+    if (it2 != orders.end()) {
+        std::cout << "First order with qty divisible by 10:\n"
+                  << "Order id " << it2->id
+                  << " with qty "  << it2->qty << "\n";
     }
 
     std::cout << "=== Stack Allocated, No Lock ===\n";
-
-
     OrderBookBuffer<Order, StackAllocator<Order>, NoLock> stackBook(5);
     stackBook.add_order({1, 101.5, 10});
     stackBook.add_order({2, 102.2, 5});
@@ -78,6 +79,5 @@ int main() {
     heapBook.add_order({11, 100.0, 12});
     heapBook.print_orders();
 
-    return 0;
     return 0;
 }
