@@ -22,12 +22,9 @@ struct NoLock {
 };
 
 struct MutexLock {
-    void lock()   const noexcept { mtx_.lock(); }
-    void unlock() const noexcept { mtx_.unlock(); }
-
     struct Lock {
-        explicit Lock(MutexLock& m) : policy_(m) { policy_.lock(); }
-        ~Lock() noexcept { policy_.unlock(); }
+        explicit Lock(MutexLock& m) : policy_(m) { policy_.mtx_.lock(); }
+        ~Lock() noexcept                       { policy_.mtx_.unlock(); }
         Lock(const Lock&) = delete;
         Lock& operator=(const Lock&) = delete;
       private:
