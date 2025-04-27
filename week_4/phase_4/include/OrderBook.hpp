@@ -1,14 +1,22 @@
-// orderbook should have
-
 #pragma once
-#include <map>
+
 #include "Order.hpp"
+#include "MemoryPool.hpp"
+#include <memory>
+#include <map>
 
-using OrderType = Order<double, int>;
-
-enum class Side { Bids, Asks };
-
-class OrderBook{
+template <typename PriceType, typename OrderIdType, typename Allocator = MemoryPool> //hardcode MemoryPool allocator
+class OrderBook {
 private:
-    std::map<Side, std::multimap<float, OrderType>> orderbook;
+    using OrderPtr = std::unique_ptr<Order<PriceType, OrderIdType>>;
+
+    std::multimap<PriceType, OrderPtr> bids;
+    std::multimap<PriceType, OrderPtr> asks;
+    Allocator allocator;
+
+public:
+    void addOrder(const OrderIdType& id, const PriceType& price, int quantity, bool is_buy);
+    bool deleteOrder(const OrderIdType& id, bool is_buy);
+    bool updateQuantity(const OrderIdType& id, int new_quantity, bool is_buy);
+    void printOrders() const;
 };
