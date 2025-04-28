@@ -2,10 +2,10 @@
 #include <iostream>
 
 template <typename PriceType, typename OrderIdType, typename Allocator>
-void OrderBook<PriceType, OrderIdType, Allocator>::addOrder(const OrderIdType& id, const PriceType& price, int quantity, bool is_buy) {
+void OrderBook<PriceType, OrderIdType, Allocator>::addOrder(const OrderIdType& id,const std::string& symbol,  const PriceType& price, int quantity, bool is_buy) {
     // Allocate memory for the order from the pool
     void* memory = allocator.allocate();
-    auto* order = new (memory) Order<PriceType, OrderIdType>(id, price, quantity, is_buy);
+    auto* order = new (memory) Order<PriceType, OrderIdType>(id, symbol,price, quantity, is_buy);
 
     // Insert the order into the correct multimap (buy or sell)
     auto& targetOrders = is_buy ? bids : asks;
@@ -21,7 +21,7 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::deleteOrder(const OrderIdType
             if (bidsIt->second->id == id) {
                 // Found the order, remove it and return memory to the pool
                 allocator.deallocate(bidsIt->second.release()); // Release the unique_ptr and deallocate memory
-                buyOrders.erase(bidsIt);  // Remove from the multimap
+                bids.erase(bidsIt);  // Remove from the multimap
                 return true;
             }
             ++bidsIt;
@@ -35,7 +35,7 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::deleteOrder(const OrderIdType
             if (asksIt->second->id == id) {
                 // Found the order, remove it and return memory to the pool
                 allocator.deallocate(asksIt->second.release()); // Release the unique_ptr and deallocate memory
-                sellOrders.erase(asksIt);  // Remove from the multimap
+                asks.erase(asksIt);  // Remove from the multimap
                 return true;
             }
             ++asksIt;
@@ -54,7 +54,7 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::updateQuantity(const OrderIdT
         while (bidsIt != bids.end()) {
             if (bidsIt->second->id == id) {
                 // Found the order
-                bidsIt->second->quantity = new_quantity
+                bidsIt->second->quantity = new_quantity;
                 return true;
             }
             ++bidsIt;
@@ -67,7 +67,7 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::updateQuantity(const OrderIdT
         auto asksIt = asks.begin();
         while (asksIt != asks.end()) {
             if (asksIt->second->id == id) {
-                asksIt->second->quantity = new_quantity
+                asksIt->second->quantity = new_quantity;
                 return true;
             }
             ++asksIt;
@@ -81,14 +81,16 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::updateQuantity(const OrderIdT
 template <typename PriceType, typename OrderIdType, typename Allocator>
 void OrderBook<PriceType, OrderIdType, Allocator>::printOrders() const {
     std::cout << "Buy Orders:\n";
-    for (const auto& [price, order] : buyOrders) {
+    for (const auto& [price, order] : bids) {
         std::cout << "Order ID: " << order->id << " Price: " << order->price
                   << " Quantity: " << order->quantity << '\n';
     }
 
     std::cout << "Sell Orders:\n";
-    for (const auto& [price, order] : sellOrders) {
+    for (const auto& [price, order] : asks) {
         std::cout << "Order ID: " << order->id << " Price: " << order->price
                   << " Quantity: " << order->quantity << '\n';
     }
 }
+
+template class OrderBook<double,int,MemoryPool>;

@@ -1,39 +1,52 @@
-#include "./include/MarketDataFeed.hpp"
+#include "../include/MarketDataFeed.hpp"
+#include "../include/OrderBook.hpp"
+#include "../include/MemoryPool.hpp"
+#include "../include/MatchingEngine.hpp"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <chrono>
 #include <thread> 
-#
+
+
+// Typedefs for simplicity
+using PriceType = double;
+using OrderIdType = int;
+using OrderType = Order<PriceType, OrderIdType>;
+using AllocatorType = MemoryPool;
+using OrderBookType = OrderBook<PriceType, OrderIdType, AllocatorType>;
+using MatchingEngineType = MatchingEngine<PriceType, OrderIdType, AllocatorType>;
+
+// Tell the pool how big each block is, and how many you want
+constexpr std::size_t blockSize = sizeof(OrderType);
+constexpr std::size_t poolSize  = 1024;
+
+
+OrderBookType orderBook(sizeof(OrderType), 1024);
+MatchingEngineType matchingEngine(orderBook);
+
+
+
+// Callback function to handle market data ticks
 void handleTick(const MarketData& data) {
-    // Supposed to push the data to the OrderBook/MatchingEngine, but just print it for now
-    std::cout << "Received Tick: " << data << std::endl;
+    matchingEngine.processMarketData(data);
+    orderBook.printOrders(); // Optional: print current book state
 }
 
 int main() {
-    // Define symbols for the simulation
     std::vector<std::string> symbols = {"PRIV", "VPC", "PCMM", "PCLO"};
 
-    // Create the Market Data Feed simulator
     MarketDataFeed feed(symbols);
-
-    // Register handler function as the callback
     feed.registerCallback(handleTick);
+    feed.setTickDelay(500000); // 0.5 seconds per tick
 
-    // Optionally set a custom tick delay
-    feed.setTickDelay(500000);
-
-    // Start the feed in a separate thread
     feed.start();
 
-    // Let the simulation run for a while
     std::cout << "Simulation running for 10 seconds..." << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
-    // Stop the feed
-    std::cout << "Stopping simulation..." << std::endl;
     feed.stop();
 
-    std::cout << "Main application finished." << std::endl;
+    std::cout << "Stopping simulation..." << std::endl;
     return 0;
 }

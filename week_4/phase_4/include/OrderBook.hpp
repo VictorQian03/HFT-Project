@@ -15,8 +15,11 @@ private:
     Allocator allocator;
 
 public:
-    void addOrder(const OrderIdType& id, const PriceType& price, int quantity, bool is_buy);
+    OrderBook(std::size_t blockSize, std::size_t poolSize)
+        : allocator(blockSize, poolSize) {}
+    void addOrder(const OrderIdType& id,const std::string& symbol, const PriceType& price, int quantity, bool is_buy);
     bool deleteOrder(const OrderIdType& id, bool is_buy);
     bool updateQuantity(const OrderIdType& id, int new_quantity, bool is_buy);
     void printOrders() const;
+    
 };
