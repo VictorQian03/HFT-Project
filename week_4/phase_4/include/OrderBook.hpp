@@ -108,18 +108,7 @@ public:
         return asks.begin()->first;
     }
 
-    std::optional<std::pair<PriceType,int>> bestBidLevel() const {
-    if (bids.empty()) return std::nullopt;
-    auto it = bids.begin();
-    return std::make_pair(it->first, it->second->quantity);
-}
-
-    // similarly for the top ask
-    std::optional<std::pair<PriceType,int>> bestAskLevel() const {
-        if (asks.empty()) return std::nullopt;
-        auto it = asks.begin();
-        return std::make_pair(it->first, it->second->quantity);
-    }
+   
 
     void matchOrder() { MatchingEngine::matchOrder(bids, asks); }
 
