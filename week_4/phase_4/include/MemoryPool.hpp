@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+// not a template class, so implementation in .cpp file
+
 class MemoryPool {
 public:
     // Constructor
