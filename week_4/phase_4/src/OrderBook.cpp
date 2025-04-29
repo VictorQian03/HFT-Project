@@ -1,3 +1,3 @@
 # include "../include/OrderBook.hpp"
 
-// stuff
+template class OrderBook<double,uint64_t>;

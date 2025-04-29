@@ -48,7 +48,7 @@ private:
 
     // Mock data generation helpers
     std::mt19937 m_rng; 
-    std::uniform_real_distribution<double> m_price_change_dist{-0.05, 0.05}; 
+    std::uniform_real_distribution<double> m_price_change_dist{-0.1, 0.1}; 
     std::uniform_int_distribution<size_t> m_symbol_index_dist; 
     std::map<std::string, std::pair<double, double>> m_current_prices; 
 };
