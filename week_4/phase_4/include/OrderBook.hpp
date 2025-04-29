@@ -2,6 +2,8 @@
 
 #include "Order.hpp"
 #include "MemoryPool.hpp"
+#include "OrderManager.hpp"
+#include <iostream>
 #include <memory>
 #include <map>
 
@@ -14,6 +16,8 @@ private:
     std::multimap<PriceType, OrderPtr> asks;
     Allocator allocator;
 
+    std::unique_ptr<OrderManager<PriceType, OrderIdType>> manager = std::make_unique<OrderManager<PriceType, OrderIdType>>();
+
 public:
     OrderBook(std::size_t blockSize, std::size_t poolSize)
         : allocator(blockSize, poolSize) {}
@@ -21,7 +25,7 @@ public:
     bool deleteOrder(const OrderIdType& id, bool is_buy);
     bool updateQuantity(const OrderIdType& id, int new_quantity, bool is_buy);
     void printOrders() const;
-    
+
 };
 
 // need to implement in .hpp for templates, since we need the code at compile time!!!
@@ -35,6 +39,17 @@ void OrderBook<PriceType, OrderIdType, Allocator>::addOrder(const OrderIdType& i
     // Insert the order into the correct multimap (buy or sell)
     auto& targetOrders = is_buy ? bids : asks;
     targetOrders.insert({price, std::unique_ptr<Order<PriceType, OrderIdType>>(order)});
+
+    // Communicate with OrderManager
+    try {
+        if (!manager->addOrder(id, std::shared_ptr<Order<PriceType, OrderIdType>>(order))) {
+            throw std::exception();
+        }
+    }
+    catch (std::exception e) {
+        std::cout << "unable to add order to OrderManager";
+    }
+
 }
 
 template <typename PriceType, typename OrderIdType, typename Allocator>
@@ -66,6 +81,17 @@ bool OrderBook<PriceType, OrderIdType, Allocator>::deleteOrder(const OrderIdType
             ++asksIt;
         }
     }
+
+    // Communicate with OrderManager
+    try {
+        if (!manager->cancelOrder(id)) {
+            throw std::exception();
+        }
+    }
+    catch (std::exception e) {
+        std::cout << "unable to cancel order in OrderManager";
+    }
+
 
     // order not found
     return false;
@@ -108,12 +134,12 @@ void OrderBook<PriceType, OrderIdType, Allocator>::printOrders() const {
     std::cout << "Buy Orders:\n";
     for (const auto& [price, order] : bids) {
         std::cout << "Order ID: " << order->id << " Price: " << order->price
-                  << " Quantity: " << order->quantity << '\n';
+                  << " Quantity: " << order->quantity << " State: " << manager->getState(order->id) << '\n';
     }
 
     std::cout << "Sell Orders:\n";
     for (const auto& [price, order] : asks) {
         std::cout << "Order ID: " << order->id << " Price: " << order->price
-                  << " Quantity: " << order->quantity << '\n';
+                  << " Quantity: " << order->quantity << " State: " << manager->getState(order->id) << '\n';
     }
 }
