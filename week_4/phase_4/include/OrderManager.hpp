@@ -2,6 +2,11 @@
 #include "Order.hpp"
 #include "OrderBook.hpp"
 #include <unordered_map>
+#include <memory>  
+#include <string>
+#include <ostream>
+#include <stdexcept> 
+#include <type_traits> 
 
 enum class OrderState {
     New,
@@ -11,7 +16,7 @@ enum class OrderState {
     Invalid
 };
 
-std::string to_string(OrderState state) {
+inline std::string to_string(OrderState state) {
     switch (state) {
         case OrderState::New: return "New";
         case OrderState::PartiallyFilled: return "PartiallyFilled";
@@ -21,7 +26,7 @@ std::string to_string(OrderState state) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, OrderState state) {
+inline std::ostream& operator<<(std::ostream& os, OrderState state) {
     return os << to_string(state);  // reuse the above function
 }
 
@@ -31,59 +36,64 @@ class OrderManager {
 
 private:
     using OrderPtr = std::shared_ptr<Order<PriceType, OrderIdType>>;
-    // using OrderPtr = std::unique_ptr<Order<PriceType, OrderIdType>>;
     std::unordered_map<OrderIdType, OrderPtr> orders;
     std::unordered_map<OrderIdType, OrderState> states;
 
 public:
+    OrderManager() = default;
     OrderPtr getOrder(OrderIdType id) {
-        auto new_ptr = nullptr;
-        if (orders.contains(id)) {
-            new_ptr = orders[id];
-        }
-        // should increase ref count for this order
-        return new_ptr;
+        auto it = orders.find(id);
+        return (it != orders.end() ? it->second : nullptr);
     }
 
     OrderState getState(OrderIdType id) {
-        auto state = OrderState::Invalid;
-        if (states.contains(id)) {
-            state = states[id];
-        }
-        return state;
+        auto it = states.find(id);
+        return (it != states.end() ? it->second : OrderState::Invalid);
     }
 
-    bool addOrder(OrderIdType id, OrderPtr ptr) {
-        if (!(orders.contains(id) || states.contains(id))) {
+    bool addOrder(OrderPtr& order_ptr) {
+        if (!order_ptr) 
             return false;
-        }
-        orders.insert({id, ptr});
-        states.insert({id, OrderState::New});
-
+        auto id = order_ptr->id;
+        if (orders.count(id) > 0) 
+            return false;
+        orders.emplace(id, order_ptr);
+        states.emplace(id, OrderState::New);
         return true;
     }
 
     bool cancelOrder(OrderIdType id) {
-        if (!(orders.contains(id) || states.contains(id))) {
+        auto oit = orders.find(id);
+        if (oit == orders.end()) 
             return false;
-        }
-        orders.erase(id);
         states[id] = OrderState::Cancelled;
-
+        orders.erase(oit);
         return true;
     }
 
-    bool fillOrder(OrderIdType id, int quantity) {
-        if (!orders.contains(id)) {
+    bool updateOrderFill(OrderIdType id, int filled_quantity) {
+        auto oit = orders.find(id);
+        if (oit == orders.end()) 
+            return false;
+
+        auto sit = states.find(id);
+        if (sit == states.end() ||
+            sit->second == OrderState::Cancelled ||
+            sit->second == OrderState::Filled)
+        {
             return false;
         }
 
-        auto total_quantity = orders[id]->quantity;
-        if (quantity >= total_quantity) {
-            states[id] = OrderState::Filled;
+        const auto& order = oit->second;
+        if (filled_quantity < 0 || filled_quantity > order->quantity) 
+            return false;
+
+        if (filled_quantity == order->quantity) {
+            sit->second = OrderState::Filled;
+            orders.erase(oit);
         }
-        else {
-            states[id] = OrderState::PartiallyFilled;
+        else if (filled_quantity > 0) {
+            sit->second = OrderState::PartiallyFilled;
         }
 
         return true;

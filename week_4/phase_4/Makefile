@@ -12,10 +12,11 @@ TARGET := hft_app
 # Sources
 SOURCES := \
     $(SRCDIR)/main.cpp \
-    $(SRCDIR)/MarketDataFeed.cpp\
+    $(SRCDIR)/MarketDataFeed.cpp \
     $(SRCDIR)/OrderBook.cpp \
     $(SRCDIR)/MatchingEngine.cpp \
     $(SRCDIR)/OrderManager.cpp \
+    $(SRCDIR)/MemoryPool.cpp \
     # $(SRCDIR)/TradeLogger.cpp
 
 # Objects

@@ -1,44 +1,59 @@
-#include "MemoryPool.hpp"
+#include "../include/MemoryPool.hpp"
 #include <new>
+#include <stdexcept>
+#include <cassert>
 
-// Constructor: Initializes  memory pool with specific block size and pool size
-MemoryPool::MemoryPool(std::size_t blockSize, std::size_t poolSize)
-    : blockSize(blockSize), poolSize(poolSize), pool(nullptr), freeList(nullptr) {
-    // Allocate memory for the pool with size of blockSize * poolSize
+// Constructor: Initializes memory pool with specific block size and pool size
+MemoryPool::MemoryPool(std::size_t blockSize_param,
+                       std::size_t poolSize_param)
+    : blockSize(blockSize_param),
+      poolSize(poolSize_param),
+      pool(nullptr),
+      freeList(nullptr)
+{
+    // 1) Allocate one big chunk
     pool = ::operator new(blockSize * poolSize);
 
-    // Initialize the free list-- link list
-    freeList = reinterpret_cast<void**>(pool);
-    void** current = freeList;
-    for (std::size_t i = 0; i < poolSize - 1; ++i) {
-        // uh oh hopefully this works
-        *current = reinterpret_cast<void*>(reinterpret_cast<char*>(current) + blockSize);
-        current = reinterpret_cast<void**>(*current);
+    // 2) Carve it into a singly‐linked free list
+    auto  buffer = static_cast<char*>(pool);
+    for (std::size_t i = 0; i < poolSize; ++i) {
+        // compute address of this slot
+        void** slot = reinterpret_cast<void**>(buffer + i * blockSize);
+        // link to next slot
+        if (i + 1 < poolSize) {
+            *slot = buffer + (i + 1) * blockSize;
+        } else {
+            *slot = nullptr;
+        }
     }
-    *current = nullptr;  // Last block is nullptr
+    // head of free list is the first slot
+    freeList = reinterpret_cast<void**>(buffer);
 }
 
-// Destructor: Deallocates the entire pool memory
+// Destructor: tear down the pool
 MemoryPool::~MemoryPool() {
     ::operator delete(pool);
 }
 
-// Allocate memory for a single block from the pool
+// Allocate one block; pop from free list
 void* MemoryPool::allocate() {
     if (freeList == nullptr) {
-        return nullptr;  // No free blocks left in the pool
+        throw std::bad_alloc();  // pool exhausted
     }
-
-    // pop the first block from the free list
+    // take the head
     void* block = freeList;
-    freeList = *reinterpret_cast<void**>(freeList);  // Move the freeList pointer to the next block, this should be valid
-    // again, hopefully this works
+    // advance to next free slot
+    freeList = reinterpret_cast<void**>(*freeList);
     return block;
 }
 
-// deallocate a block of memory and return it to the free list
+// Return a block back to the free list
 void MemoryPool::deallocate(void* pointer) {
-    // add the block back to the free list
-    *reinterpret_cast<void**>(pointer) = freeList;  // Link the deallocated block to the free list
-    freeList = pointer;  // update the free list to point to the newly freed block
+    if (pointer == nullptr) {
+        return;
+    }
+    // push it back onto the front
+    void** slot = reinterpret_cast<void**>(pointer);
+    *slot      = freeList;
+    freeList   = slot;
 }
