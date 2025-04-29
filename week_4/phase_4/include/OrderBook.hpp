@@ -108,19 +108,38 @@ public:
         return asks.begin()->first;
     }
 
-    void matchTop() { MatchingEngine::matchTop(bids, asks); }
+    std::optional<std::pair<PriceType,int>> bestBidLevel() const {
+    if (bids.empty()) return std::nullopt;
+    auto it = bids.begin();
+    return std::make_pair(it->first, it->second->quantity);
+}
 
-     void printBook() const {
-        std::cout << "--- Order Book ---\n";
+    // similarly for the top ask
+    std::optional<std::pair<PriceType,int>> bestAskLevel() const {
+        if (asks.empty()) return std::nullopt;
+        auto it = asks.begin();
+        return std::make_pair(it->first, it->second->quantity);
+    }
+
+    void matchOrder() { MatchingEngine::matchOrder(bids, asks); }
+
+    void printBook(size_t levels = 3) const {
+        std::cout << "--- Order Book (Top " << levels << " levels) ---\n";
         std::cout << "Asks:\n";
-        for (const auto& [price, order] : asks) {
+        size_t count = 0;
+        for (auto it = asks.begin(); it != asks.end() && count < levels; ++it, ++count) {
+            const auto& price = it->first;
+            const auto& order = it->second;
             std::cout << "  ID:" << order->id
                       << " " << order->symbol
                       << " qty=" << order->quantity
                       << " price=" << price << "\n";
         }
         std::cout << "Bids:\n";
-        for (const auto& [price, order] : bids) {
+        count = 0;
+        for (auto it = bids.begin(); it != bids.end() && count < levels; ++it, ++count) {
+            const auto& price = it->first;
+            const auto& order = it->second;
             std::cout << "  ID:" << order->id
                       << " " << order->symbol
                       << " qty=" << order->quantity

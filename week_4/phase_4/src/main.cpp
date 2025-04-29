@@ -13,6 +13,7 @@ static std::atomic<uint64_t>*     gNextOrder = nullptr;
 
 static std::mt19937_64 gRng{std::random_device{}()};
 static std::uniform_int_distribution<int> gSideDist(0,1);
+static std::uniform_int_distribution<int> gQtyDist(1,10);
 static std::uniform_real_distribution<double> gOffsetDist(0.0, 1.0);
 
 
@@ -20,36 +21,42 @@ void handleTick(const MarketData& data) {
     // Supposed to push the data to the OrderBook/MatchingEngine, but just print it for now
     std::cout << "Received Tick: " << data << std::endl;
 
-   
-   
-    
-    int    qty   = 10;
+    int qty1 = gQtyDist(gRng);
 
     uint64_t oid = (*gNextOrder)++;                       
-    
-    bool ok_buy = gBook->addOrder(oid, data.symbol, data.bid_price, qty, true);
+
+    // New order ID for buy
+   
+    std::cout << "[Placing BUY]  ID=" << oid 
+              << " qty=" << qty1 
+              << " @ " << data.bid_price 
+              << std::endl;
+
+    bool ok_buy = gBook->addOrder(oid, data.symbol, data.bid_price, qty1, true);
     
     if (!ok_buy) {
         std::cerr << "[OrderBook] pool exhausted, dropping order\n";
         return;
     }
-
-    oid = (*gNextOrder)++;     
-    bool ok_sell = gBook->addOrder(oid, data.symbol, data.ask_price, qty, false);
+    int qty2 = gQtyDist(gRng);
+    oid = (*gNextOrder)++;    
+    std::cout << "[Placing SELL] ID=" << oid
+              << " qty=" << qty2
+              << " @ " << data.ask_price
+              << std::endl; 
+    bool ok_sell = gBook->addOrder(oid, data.symbol, data.ask_price, qty2, false);
     
      if (!ok_sell) {
         std::cerr << "[OrderBook] pool exhausted, dropping order\n";
         return;
     }
     
-    gBook->matchTop();
-    gBook->printBook();
-      
+    gBook->matchOrder();
+    gBook->printBook(3);
 }
-
 int main() {
     // Define symbols for the simulation
-    std::vector<std::string> symbols = {"PRIV"};
+    std::vector<std::string> symbols = {"AAPL"};
 
     // Create the Market Data Feed simulator
     MarketDataFeed feed(symbols);
@@ -67,14 +74,12 @@ int main() {
     // Optionally set a custom tick delay
     feed.setTickDelay(500000);
 
-   
-
     // Start the feed in a separate thread
     feed.start();
 
     // Let the simulation run for a while
     std::cout << "Simulation running for 10 seconds..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // Stop the feed
     std::cout << "Stopping simulation..." << std::endl;
