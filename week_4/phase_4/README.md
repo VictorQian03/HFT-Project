@@ -88,10 +88,6 @@ The system follows a modular architecture:
 
 ![Logo](flowchart.png)
 
--------------------------------------------------------------------------------
-                             Component Flow
--------------------------------------------------------------------------------
-
 1.  **`main.cpp` (Orchestrator):**
     *   **Intention:** To initialize and connect all the major components of the system and manage the overall application lifecycle.
     *   **Flow:**
