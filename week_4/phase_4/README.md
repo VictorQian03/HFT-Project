@@ -86,43 +86,7 @@ The system follows a modular architecture:
 *   **`std::thread` / `std::atomic`:** Basic asynchronous data feed simulation.
 *   **Minimal Copying:** Use of `std::move` where applicable.
 
-
-                                   +-----------+
-                                   | main.cpp  | (Entry Point, Orchestrator)
-                                   +-----------+
-                                       | | | |
-          ------------------------------- | | -------------------------------+
-          | (Initializes)                 | |                                |
-          V                               V V                                V
-+-----------------+        +-------------------------+         +-----------------------+   +--------------+
-| MarketDataFeed  |------->| MatchingEngine          |<--------| OrderBook             |<--| MemoryPool   |
-| (Async Data Sim)|        | (Core Logic, Matching)  |         | (Order Storage/Query) |   | (Allocation) |
-+-----------------+        +-------------------------+         +-----------------------+   +--------------+
-          |                         |         ^                            |         ^
- (Generates MarketData)             |         | (Adds/Matches Orders)      |         | (Allo/Deallocates)
-          |                         V         |                            V         |
-          |                 (Uses OrderBook)  |                  (Stores/Manages Order*) |
-          |                                   |                            |         |
-          | (Callback)                        |                            |         |
-          V                                   |                            +---------+
-+-----------------+                           |
-| handleTick (in  |<--------------------------+                            +--------------+
-| main.cpp)       |   (Processes MarketData)                               | Order        |
-+-----------------+                                                        | (Data Struct)|
-          |                                                                +--------------+
-          | (Calls MatchingEngine)
-          | (Calls OrderBook::printOrders)
-          |
-          |--------------------------------------------------------------+
-          | (MatchingEngine potentially uses OrderManager - limited use) V
-          |                                                 +----------------+
-          +------------------------------------------------>| OrderManager   |
-                                                            | (State Tracking) |
-                                                            +----------------+
-                                                                    ^
-                                                                    | (Tracks Order*)
-                                                                    +-----------------+
-
+![Logo](flowchart.png)
 
 -------------------------------------------------------------------------------
                              Component Flow
