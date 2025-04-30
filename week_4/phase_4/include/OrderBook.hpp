@@ -112,20 +112,34 @@ public:
         auto it = ordersById_.find(id);
         return (it != ordersById_.end() ? it->second : nullptr);
     }
+    std::optional<PriceType> bestBid() const {
+        if (bids_.empty()) return std::nullopt;
+        return bids_.begin()->first;
+    }
+    std::optional<PriceType> bestAsk() const {
+        if (asks_.empty()) return std::nullopt;
+        return asks_.begin()->first;
+    }
 
     void printOrders(std::ostream& os = std::cout) const {
         os << "--- Order Book ---\n"
-           << "Asks:\n";
+           << "Top 3 Asks:\n";
+        int askCount = 0;
         for (auto const& [px, order] : asks_) {
+            if (askCount >= 3) break;
             os << "  ID:" << order->id
                << " Px:" << order->price
                << " Qty:" << order->quantity << "\n";
+            askCount++;
         }
-        os << "Bids:\n";
+        os << "Top 3 Bids:\n";
+        int bidCount = 0;
         for (auto const& [px, order] : bids_) {
+            if (bidCount >= 3) break;
             os << "  ID:" << order->id
                << " Px:" << order->price
                << " Qty:" << order->quantity << "\n";
+            bidCount++;
         }
         os << "------------------\n";
     }

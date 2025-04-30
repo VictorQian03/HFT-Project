@@ -28,7 +28,8 @@ MatchingEngineType matchingEngine(orderBook);
 // Callback function to handle market data ticks
 void handleTick(const MarketData& data) {
     matchingEngine.processMarketData(data);
-    orderBook.printOrders(); // Optional: print current book state
+    orderBook.printOrders(); 
+    
 }
 
 int main() {

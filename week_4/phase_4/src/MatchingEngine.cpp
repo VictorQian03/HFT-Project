@@ -22,6 +22,35 @@ void MatchingEngine<PriceType, OrderIdType, Allocator>::processMarketData(const 
     
     // After adding orders, try to match them
     matchOrders();
+
+    // Check best bid and ask prices
+    auto bestBid = orderBook.bestBid();
+    auto bestAsk = orderBook.bestAsk();
+    
+    if (bestBid.has_value() && bestAsk.has_value()) {
+      
+        // If best bid is less than 100, add a new buy order
+        if (bestBid.value() < 100) {
+            OrderIdType newOrderId = generateOrderId();
+            // Create a buy order at the current best bid price with 1 quantity
+            auto orderPtr = orderBook.addOrder(
+                newOrderId,
+                data.symbol,
+                bestBid.value(),
+                1,  // quantity
+                true  // is_buy
+            );
+            
+            // Track the order in the order manager
+            if (orderPtr) {
+                bool success = orderManager.addOrder(orderPtr);
+                if (success) {
+                    std::cout << "Added new buy order at price " << bestBid.value() 
+                              << " with ID " << newOrderId << std::endl;
+                }
+            }
+        }
+    }
 }
 
 template <typename PriceType, typename OrderIdType, typename Allocator>

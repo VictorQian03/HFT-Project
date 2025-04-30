@@ -3,6 +3,7 @@
 #include "OrderBook.hpp"
 #include "Order.hpp"
 #include "MarketDataFeed.hpp"
+#include "OrderManager.hpp"
 #include <string>
 #include <iostream>
 #include <algorithm>
@@ -17,6 +18,7 @@ public:
 
 private:
     OrderBook<PriceType, OrderIdType, Allocator>& orderBook;
+    OrderManager<PriceType, OrderIdType> orderManager;
     static constexpr int defaultQuantity = 20;
     OrderIdType generateOrderId();
 };
