@@ -86,9 +86,6 @@ The system follows a modular architecture:
 *   **`std::thread` / `std::atomic`:** Basic asynchronous data feed simulation.
 *   **Minimal Copying:** Use of `std::move` where applicable.
 
-+-----------------------------------------------------------------------------+
-|                            Architecture Overview                            |
-+-----------------------------------------------------------------------------+
 
                                    +-----------+
                                    | main.cpp  | (Entry Point, Orchestrator)
