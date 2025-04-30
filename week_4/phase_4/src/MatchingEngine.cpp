@@ -75,12 +75,12 @@ void MatchingEngine<PriceType, OrderIdType, Allocator>::matchOrders() {
         int matchedQty = std::min(buyOrder->quantity, sellOrder->quantity);
 
         // Execute the trade
-        std::cout << "MATCH: "
+       /* std::cout << "MATCH: "
                  << "Buy Order " << buyOrder->id 
                  << " with Sell Order " << sellOrder->id
                  << " at price " << ask_it->first
                  << " for " << matchedQty << " units" << std::endl;
-
+*/
         // Update quantities
         buyOrder->quantity -= matchedQty;
         sellOrder->quantity -= matchedQty;

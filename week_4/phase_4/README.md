@@ -18,3 +18,9 @@
     ./hft_app
     ```
     The application will start, and the Market Data Feed Simulator will begin generating ticks, printing them to the console. It will run for a while and then stop.
+
+## to run the test latency cpp
+  ```bash
+    make clean
+    make test
+    ```
