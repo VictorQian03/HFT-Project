@@ -132,4 +132,7 @@ public:
 
     const auto& getBids() const { return bids_; }
     const auto& getAsks() const { return asks_; }
+    
+    auto& getBids() { return bids_; }
+    auto& getAsks() { return asks_; }
 };

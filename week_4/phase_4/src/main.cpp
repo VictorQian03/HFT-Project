@@ -25,8 +25,6 @@ constexpr std::size_t poolSize  = 1024;
 OrderBookType orderBook(sizeof(OrderType), 1024);
 MatchingEngineType matchingEngine(orderBook);
 
-
-
 // Callback function to handle market data ticks
 void handleTick(const MarketData& data) {
     matchingEngine.processMarketData(data);
@@ -34,7 +32,7 @@ void handleTick(const MarketData& data) {
 }
 
 int main() {
-    std::vector<std::string> symbols = {"PRIV", "VPC", "PCMM", "PCLO"};
+    std::vector<std::string> symbols = {"PRIV"};
 
     MarketDataFeed feed(symbols);
     feed.registerCallback(handleTick);
