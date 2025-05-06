@@ -34,7 +34,7 @@ void OptimizedOrderBook::addOrder(const std::string& id, double price, int quant
         orderLookup[id] = newOrder;
         activeOrderCount.fetch_add(1, std::memory_order_relaxed);
     } catch (const std::runtime_error& e) {
-        std::cerr << "Error adding order " << id << ": " << e.what() << std::endl;
+        throw;
     }
 }
 
@@ -59,13 +59,11 @@ void OptimizedOrderBook::modifyOrder(const std::string& id, double newPrice, int
         }
         oldOrderPtr->quantity = newQuantity;
     } else {
-        std::cerr << "Warning: Order ID " << id << " not found. Cannot modify." << std::endl;
     }
 }
 
 void OptimizedOrderBook::deleteOrder(const std::string& id) {
      if (id.empty()) {
-        std::cerr << "Warning: Empty order ID provided for deletion. Deletion cancelled." << std::endl;
         return;
     }
     auto it = orderLookup.find(id);
@@ -88,7 +86,6 @@ void OptimizedOrderBook::deleteOrder(const std::string& id) {
         orderLookup.erase(it);
         activeOrderCount.fetch_sub(1, std::memory_order_relaxed);
     } else {
-        std::cerr << "Warning: Order ID " << id << " not found. Cannot delete." << std::endl;
     }
 }
 

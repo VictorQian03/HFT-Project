@@ -1,34 +1,51 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -g
-LDFLAGS =
+CXXFLAGS_COMMON = -std=c++17 -Wall -Wextra -I$(INCDIR)
+CXXFLAGS_DEBUG = $(CXXFLAGS_COMMON) -g
+CXXFLAGS_RELEASE = $(CXXFLAGS_COMMON) -O3 -DNDEBUG
 
-TARGET = order_book_benchmark_app
+LDFLAGS =
 
 SRCDIR = src
 INCDIR = include
 OBJDIR = obj
 
-SOURCES = $(SRCDIR)/main.cpp \
-          $(SRCDIR)/orderbook.cpp \
-          $(SRCDIR)/optimized_orderbook.cpp
+TARGET_BENCHMARK = order_book_benchmark_app
+SOURCES_BENCHMARK = $(SRCDIR)/main.cpp \
+                    $(SRCDIR)/orderbook.cpp \
+                    $(SRCDIR)/optimized_orderbook.cpp
+OBJECTS_BENCHMARK = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_BENCHMARK))
 
-OBJECTS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
+TARGET_TEST = order_book_tests
+SOURCES_TEST = $(SRCDIR)/tests.cpp \
+               $(SRCDIR)/orderbook.cpp \
+               $(SRCDIR)/optimized_orderbook.cpp 
+OBJECTS_TEST = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/test_%.o,$(SOURCES_TEST)) 
 
-.PHONY: all clean run
 
-all: $(TARGET)
+.PHONY: all clean run_benchmarks run_tests
 
-$(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+all: $(TARGET_BENCHMARK) $(TARGET_TEST)
+
+$(TARGET_BENCHMARK): $(OBJECTS_BENCHMARK)
+	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS) # Use RELEASE for benchmarks
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS_RELEASE) -c $< -o $@
+
+$(TARGET_TEST): $(OBJECTS_TEST)
+	$(CXX) $(CXXFLAGS_DEBUG) -o $@ $^ $(LDFLAGS) # Use DEBUG for tests
+
+$(OBJDIR)/test_%.o: $(SRCDIR)/%.cpp | $(OBJDIR) 
+	$(CXX) $(CXXFLAGS_DEBUG) -c $< -o $@
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-run: all
-	./$(TARGET)
+run_benchmarks: $(TARGET_BENCHMARK)
+	./$(TARGET_BENCHMARK)
+
+run_tests: $(TARGET_TEST)
+	./$(TARGET_TEST)
 
 clean:
-	rm -rf $(OBJDIR) $(TARGET) $(TARGET)_original $(TARGET)_optimized # Clean up potential old targets too
+	rm -rf $(OBJDIR) $(TARGET_BENCHMARK) $(TARGET_TEST)

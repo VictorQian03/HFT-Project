@@ -36,7 +36,6 @@ void OrderBook::modifyOrder(const std::string& id, double newPrice, int newQuant
         }
         addOrder(id, newPrice, newQuantity, oldOrder.isBuy);
     } else {
-        std::cerr << "Warning: Order ID " << id << " not found. Cannot modify." << std::endl;
     }
 }
 
@@ -61,7 +60,6 @@ void OrderBook::deleteOrder(const std::string& id) {
 
         orderLookup.erase(it);
     } else {
-        std::cerr << "Warning: Order ID " << id << " not found. Cannot delete." << std::endl;
     }
 }
 

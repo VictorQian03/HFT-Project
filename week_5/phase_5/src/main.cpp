@@ -158,21 +158,7 @@ void run_all_benchmarks(int current_num_orders) {
 }
 
 int main() {
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "--- Running Basic Sanity Check (Original) ---" << std::endl;
-    OrderBook ob_test;
-    ob_test.addOrder("B1", 10, 100, true); 
-    ob_test.displayFullBook(); 
-    ob_test.deleteOrder("B1"); 
-    ob_test.displayFullBook();
-
-    std::cout << "\n--- Running Basic Sanity Check (Optimized) ---" << std::endl;
-    OptimizedOrderBook oob_test(10);
-    oob_test.addOrder("OB1", 10, 100, true); 
-    oob_test.displayFullBook(); 
-    oob_test.deleteOrder("OB1"); 
-    oob_test.displayFullBook();
-    
+    std::cout << std::fixed << std::setprecision(3);   
     std::cout << "\n\n--- Starting Full Performance Benchmark Suite ---" << std::endl;
 
     const int num_orders_small = 10000;
