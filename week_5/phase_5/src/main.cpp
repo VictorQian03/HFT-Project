@@ -1,74 +1,191 @@
-#include "../include/orderbook.h"
 #include <iostream>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <random>
+#include <iomanip>
+#include "../include/orderbook.h"     
+#include "../include/optimized_orderbook.h"
 
-int main() {
-    OrderBook book;
+struct TestOrderData {
+    std::string id;
+    double price;
+    int quantity;
+    bool isBuy;
+};
 
-    std::cout << "Initial empty book:" << std::endl;
-    book.displayFullBook();
+std::vector<TestOrderData> generate_orders(int count, double basePrice = 100.0, int priceRange = 1000) {
+    std::vector<TestOrderData> orders;
+    orders.reserve(count);
+    std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+    std::uniform_real_distribution<double> price_dist(basePrice - (double)priceRange/200.0, basePrice + (double)priceRange/200.0);
+    std::uniform_int_distribution<int> quantity_dist(1, 100);
+    std::uniform_int_distribution<int> side_dist(0, 1);
 
-    std::cout << "\nAdding orders..." << std::endl;
-    book.addOrder("BUY001", 100.50, 10, true);   
-    book.addOrder("SELL001", 101.00, 5,  false);  
-    book.addOrder("BUY002", 100.50, 20, true);   
-    book.addOrder("BUY003", 99.80,  15, true);  
-    book.addOrder("SELL002", 101.00, 8,  false);  
-    book.addOrder("SELL003", 101.20, 12, false);  
-    book.addOrder("MIXED_LVL_BUY", 100.75, 5, true); 
-    book.addOrder("MIXED_LVL_SELL", 100.75, 7, false); 
+    for (int i = 0; i < count; ++i) {
+        orders.push_back({
+            "ORD" + std::to_string(i),
+            std::round(price_dist(rng) * 100.0) / 100.0,
+            quantity_dist(rng),
+            side_dist(rng) == 1
+        });
+    }
+    return orders;
+}
 
-    book.displayFullBook();
+void benchmark_add_orders_original(OrderBook& book, const std::vector<TestOrderData>& orders_to_add) {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (const auto& o : orders_to_add) {
+        book.addOrder(o.id, o.price, o.quantity, o.isBuy);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Original Book - Add " << orders_to_add.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
 
-    std::cout << "\nModifying BUY002 (100.50 Q20 Buy) to Price 100.60, Qty 25..." << std::endl;
-    book.modifyOrder("BUY002", 100.60, 25);
-    book.displayFullBook();
+void benchmark_modify_orders_original(OrderBook& book, const std::vector<TestOrderData>& modified_params) {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (const auto& m : modified_params) {
+        book.modifyOrder(m.id, m.price, m.quantity);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Original Book - Modify " << modified_params.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
 
-    std::cout << "\nModifying SELL001 (101.00 Q5 Sell) to Price 101.00, Qty 3 (same price, new quantity)..." << std::endl;
-    book.modifyOrder("SELL001", 101.00, 3);
-    book.displayFullBook();
-    
-    std::cout << "\nDeleting BUY001 (100.50 Q10 Buy)..." << std::endl;
-    book.deleteOrder("BUY001");
-    book.displayFullBook();
+void benchmark_delete_orders_original(OrderBook& book, const std::vector<TestOrderData>& orders_to_delete) {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (const auto& o : orders_to_delete) {
+        book.deleteOrder(o.id);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Original Book - Delete " << orders_to_delete.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
 
-    std::cout << "\nDeleting SELL003 (101.20 Q12 Sell - last order at this price level)..." << std::endl;
-    book.deleteOrder("SELL003"); 
-    book.displayFullBook();
+const size_t UNROLL_FACTOR = 4; 
 
-    std::cout << "\nAttempting to modify a non-existent order (XYZ)..." << std::endl;
-    book.modifyOrder("XYZ", 200.0, 100);
+void benchmark_add_orders_optimized_unrolled(OptimizedOrderBook& book, const std::vector<TestOrderData>& orders_to_add) {
+    auto start = std::chrono::high_resolution_clock::now();
+    size_t i = 0;
+    size_t n = orders_to_add.size();
+    for (i = 0; i + UNROLL_FACTOR <= n; i += UNROLL_FACTOR) {
+        book.addOrder(orders_to_add[i].id, orders_to_add[i].price, orders_to_add[i].quantity, orders_to_add[i].isBuy);
+        book.addOrder(orders_to_add[i+1].id, orders_to_add[i+1].price, orders_to_add[i+1].quantity, orders_to_add[i+1].isBuy);
+        book.addOrder(orders_to_add[i+2].id, orders_to_add[i+2].price, orders_to_add[i+2].quantity, orders_to_add[i+2].isBuy);
+        book.addOrder(orders_to_add[i+3].id, orders_to_add[i+3].price, orders_to_add[i+3].quantity, orders_to_add[i+3].isBuy);
+    }
+    for (; i < n; ++i) {
+        book.addOrder(orders_to_add[i].id, orders_to_add[i].price, orders_to_add[i].quantity, orders_to_add[i].isBuy);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Optimized Book - Add (Unrolled " << UNROLL_FACTOR << ") " << orders_to_add.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
 
-    std::cout << "\nAttempting to delete a non-existent order (ABC)..." << std::endl;
-    book.deleteOrder("ABC");
-    
-    std::cout << "\nChecking getOrder for BUY003:" << std::endl;
-    Order foundOrder;
-    if(book.getOrder("BUY003", foundOrder)) {
-        std::cout << "Found: ID=" << foundOrder.id << ", P=" << foundOrder.price 
-                  << ", Q=" << foundOrder.quantity << ", isBuy=" << (foundOrder.isBuy ? "YES" : "NO") << std::endl;
-    } else {
-        std::cout << "Order BUY003 not found." << std::endl;
+void benchmark_modify_orders_optimized_unrolled(OptimizedOrderBook& book, const std::vector<TestOrderData>& modified_params) {
+    auto start = std::chrono::high_resolution_clock::now();
+    size_t i = 0;
+    size_t n = modified_params.size();
+    for (i = 0; i + UNROLL_FACTOR <= n; i += UNROLL_FACTOR) {
+        book.modifyOrder(modified_params[i].id, modified_params[i].price, modified_params[i].quantity);
+        book.modifyOrder(modified_params[i+1].id, modified_params[i+1].price, modified_params[i+1].quantity);
+        book.modifyOrder(modified_params[i+2].id, modified_params[i+2].price, modified_params[i+2].quantity);
+        book.modifyOrder(modified_params[i+3].id, modified_params[i+3].price, modified_params[i+3].quantity);
+    }
+    for (; i < n; ++i) {
+        book.modifyOrder(modified_params[i].id, modified_params[i].price, modified_params[i].quantity);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Optimized Book - Modify (Unrolled " << UNROLL_FACTOR << ") " << modified_params.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
+
+void benchmark_delete_orders_optimized_unrolled(OptimizedOrderBook& book, const std::vector<TestOrderData>& orders_to_delete) {
+    auto start = std::chrono::high_resolution_clock::now();
+    size_t i = 0;
+    size_t n = orders_to_delete.size();
+    for (i = 0; i + UNROLL_FACTOR <= n; i += UNROLL_FACTOR) {
+        book.deleteOrder(orders_to_delete[i].id);
+        book.deleteOrder(orders_to_delete[i+1].id);
+        book.deleteOrder(orders_to_delete[i+2].id);
+        book.deleteOrder(orders_to_delete[i+3].id);
+    }
+    for (; i < n; ++i) {
+        book.deleteOrder(orders_to_delete[i].id);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Optimized Book - Delete (Unrolled " << UNROLL_FACTOR << ") " << orders_to_delete.size() << " Orders: " << elapsed.count() << " ms" << std::endl;
+}
+
+void run_all_benchmarks(int current_num_orders) {
+    std::cout << "\n--- Testing with " << current_num_orders << " base orders ---" << std::endl;
+    std::vector<TestOrderData> orders_data = generate_orders(current_num_orders);
+
+    std::vector<TestOrderData> modified_params;
+    modified_params.reserve(orders_data.size());
+    std::mt19937 rng_modify(std::chrono::steady_clock::now().time_since_epoch().count() + current_num_orders); 
+    std::uniform_real_distribution<double> price_delta_dist(-0.5, 0.5);
+    std::uniform_int_distribution<int> quantity_delta_dist(-10, 10);
+    for(const auto& o_orig : orders_data) {
+        modified_params.push_back({
+            o_orig.id,
+            std::max(1.0, std::round((o_orig.price + price_delta_dist(rng_modify)) * 100.0) / 100.0),
+            std::max(1, o_orig.quantity + quantity_delta_dist(rng_modify)),
+            o_orig.isBuy 
+        });
     }
 
-    std::cout << "\nAdding an order with an ID that was previously deleted (BUY001)..." << std::endl;
-    book.addOrder("BUY001", 99.99, 50, true); 
-    book.displayFullBook();
+    std::cout << "\n--- Benchmarking Original OrderBook ---" << std::endl;
+    { 
+        OrderBook original_book;
+        benchmark_add_orders_original(original_book, orders_data);
+        benchmark_modify_orders_original(original_book, modified_params);
+        benchmark_delete_orders_original(original_book, orders_data); 
+    }
 
-    std::cout << "\nDeleting SELL002 (101.00 Q8 Sell). SELL001 is also at 101.00 (Sell, Q3)..." << std::endl;
-    book.deleteOrder("SELL002"); 
-    book.displayFullBook();
+    std::cout << "\n--- Benchmarking OptimizedOrderBook ---" << std::endl;
+    { 
+        OptimizedOrderBook optimized_book(current_num_orders + 100); 
+        benchmark_add_orders_optimized_unrolled(optimized_book, orders_data);
+        benchmark_modify_orders_optimized_unrolled(optimized_book, modified_params);
+        benchmark_delete_orders_optimized_unrolled(optimized_book, orders_data); 
+        if (optimized_book.getActiveOrderCount() != 0 || optimized_book.getPoolUsedCount() != 0) {
+            std::cout << "Warning (Optimized): Orders or pool objects not fully cleared after benchmarks for size " << current_num_orders << std::endl;
+        }
+    }
+}
+
+int main() {
+    std::cout << std::fixed << std::setprecision(3);
+    std::cout << "--- Running Basic Sanity Check (Original) ---" << std::endl;
+    OrderBook ob_test;
+    ob_test.addOrder("B1", 10, 100, true); 
+    ob_test.displayFullBook(); 
+    ob_test.deleteOrder("B1"); 
+    ob_test.displayFullBook();
+
+    std::cout << "\n--- Running Basic Sanity Check (Optimized) ---" << std::endl;
+    OptimizedOrderBook oob_test(10);
+    oob_test.addOrder("OB1", 10, 100, true); 
+    oob_test.displayFullBook(); 
+    oob_test.deleteOrder("OB1"); 
+    oob_test.displayFullBook();
     
-    std::cout << "\nDeleting SELL001 (101.00 Q3 Sell). Now no Sells at 101.00..." << std::endl;
-    book.deleteOrder("SELL001"); 
-    book.displayFullBook();
-    
-    std::cout << "\nDeleting MIXED_LVL_SELL (100.75 Q7 Sell)..." << std::endl;
-    book.deleteOrder("MIXED_LVL_SELL");
-    book.displayFullBook(); 
-    
-    std::cout << "\nDeleting MIXED_LVL_BUY (100.75 Q5 Buy)..." << std::endl;
-    book.deleteOrder("MIXED_LVL_BUY"); 
-    book.displayFullBook();
+    std::cout << "\n\n--- Starting Full Performance Benchmark Suite ---" << std::endl;
+
+    const int num_orders_small = 10000;
+    const int num_orders_medium = 100000;
+    const int num_orders_large = 500000; 
+
+    std::vector<int> test_sizes = {num_orders_small, num_orders_medium, num_orders_large};
+
+    for (int current_num_orders : test_sizes) {
+        run_all_benchmarks(current_num_orders);
+    }
+
+    std::cout << "\n--- All Benchmarks Complete ---" << std::endl;
 
     return 0;
 }
