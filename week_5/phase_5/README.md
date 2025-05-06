@@ -1,1 +1,68 @@
-# HW5
+# Phase 5 Test Outputs:
+===== Running Unit Tests for Original OrderBook =====
+Running test_original_add_order...
+test_original_add_order PASSED.
+Running test_original_delete_order...
+test_original_delete_order PASSED.
+Running test_original_modify_order...
+test_original_modify_order PASSED.
+Running test_original_empty_level_cleanup...
+test_original_empty_level_cleanup PASSED.
+Running test_original_get_order...
+test_original_get_order PASSED.
+Running test_original_add_duplicate_id...
+test_original_add_duplicate_id PASSED.
+Running test_original_modify_nonexistent...
+test_original_modify_nonexistent PASSED.
+Running test_original_delete_nonexistent...
+test_original_delete_nonexistent PASSED.
+Running test_original_invalid_params...
+Warning: Invalid order parameters for ID [EMPTY_ID]. Order not added.
+Warning: Invalid order parameters for ID ID1. Order not added.
+Warning: Invalid order parameters for ID ID2. Order not added.
+Warning: Invalid parameters for modifying order ID ID3. Modification cancelled.
+Warning: Invalid parameters for modifying order ID ID3. Modification cancelled.
+test_original_invalid_params PASSED.
+===== Original OrderBook Unit Tests Complete =====
+
+===== Running Unit Tests for OptimizedOrderBook =====
+Running test_optimized_add_order...
+test_optimized_add_order PASSED.
+Running test_optimized_delete_order...
+test_optimized_delete_order PASSED.
+Running test_optimized_modify_order...
+test_optimized_modify_order PASSED.
+Running test_optimized_empty_level_cleanup...
+test_optimized_empty_level_cleanup PASSED.
+Running test_optimized_get_order...
+test_optimized_get_order PASSED.
+Running test_optimized_pool_usage...
+test_optimized_pool_usage PASSED.
+Running test_optimized_atomic_counter...
+test_optimized_atomic_counter PASSED.
+Running test_optimized_add_duplicate_id...
+Warning: Order ID DUP001 already exists. Use modifyOrder or delete first. Order not added.
+test_optimized_add_duplicate_id PASSED.
+Running test_optimized_modify_nonexistent...
+test_optimized_modify_nonexistent PASSED.
+Running test_optimized_delete_nonexistent...
+test_optimized_delete_nonexistent PASSED.
+Running test_optimized_invalid_params...
+Warning: Invalid order parameters for ID [EMPTY_ID]. Order not added.
+Warning: Invalid order parameters for ID ID1. Order not added.
+Warning: Invalid order parameters for ID ID2. Order not added.
+Warning: Invalid parameters for modifying order ID ID3. Modification cancelled.
+Warning: Invalid parameters for modifying order ID ID3. Modification cancelled.
+test_optimized_invalid_params PASSED.
+Running test_optimized_pool_exhaustion...
+test_optimized_pool_exhaustion PASSED.
+===== OptimizedOrderBook Unit Tests Complete =====
+
+--- Stress Testing Original OrderBook with 50000 operations ---
+Original OrderBook Stress Test completed 50000 operations in 2445.06 ms.
+Original Book final order count (approx based on existing_ids): 2492
+
+--- Stress Testing OptimizedOrderBook with 50000 operations ---
+OptimizedOrderBook Stress Test completed 50000 operations in 1397.67 ms.
+Optimized Book final active order count: 2692
+Optimized Book pool: Used=2692, Free=48308
