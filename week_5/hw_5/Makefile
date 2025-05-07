@@ -26,9 +26,15 @@ SOURCES_TS_BENCHMARK = $(SRCDIR)/time_series_benchmark.cpp \
                        $(SRCDIR)/time_series_processor.cpp
 OBJECTS_TS_BENCHMARK = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_TS_BENCHMARK))
 
-.PHONY: all clean run_hash_benchmark run_pq_benchmark run_ts_benchmark
+# Order Book Benchmark
+TARGET_ORDERBOOK_BENCHMARK = orderbook_benchmark_app
+SOURCES_ORDERBOOK_BENCHMARK = $(SRCDIR)/orderbook_benchmark.cpp \
+                              $(SRCDIR)/optimized_orderbook.cpp
+OBJECTS_ORDERBOOK_BENCHMARK = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_ORDERBOOK_BENCHMARK))
 
-all: $(TARGET_HASH_BENCHMARK) $(TARGET_PQ_BENCHMARK) $(TARGET_TS_BENCHMARK)
+.PHONY: all clean run_hash_benchmark run_pq_benchmark run_ts_benchmark run_orderbook_benchmark
+
+all: $(TARGET_HASH_BENCHMARK) $(TARGET_PQ_BENCHMARK) $(TARGET_TS_BENCHMARK) $(TARGET_ORDERBOOK_BENCHMARK)
 
 $(TARGET_HASH_BENCHMARK): $(OBJECTS_HASH_BENCHMARK)
 	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS)
@@ -37,6 +43,9 @@ $(TARGET_PQ_BENCHMARK): $(OBJECTS_PQ_BENCHMARK)
 	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS)
 
 $(TARGET_TS_BENCHMARK): $(OBJECTS_TS_BENCHMARK)
+	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS)
+
+$(TARGET_ORDERBOOK_BENCHMARK): $(OBJECTS_ORDERBOOK_BENCHMARK)
 	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
@@ -54,5 +63,8 @@ run_pq_benchmark: $(TARGET_PQ_BENCHMARK)
 run_ts_benchmark: $(TARGET_TS_BENCHMARK)
 	./$(TARGET_TS_BENCHMARK)
 
+run_orderbook_benchmark: $(TARGET_ORDERBOOK_BENCHMARK)
+	./$(TARGET_ORDERBOOK_BENCHMARK)
+
 clean:
-	rm -rf $(OBJDIR) $(TARGET_HASH_BENCHMARK) $(TARGET_PQ_BENCHMARK) $(TARGET_TS_BENCHMARK)
+	rm -rf $(OBJDIR) $(TARGET_HASH_BENCHMARK) $(TARGET_PQ_BENCHMARK) $(TARGET_TS_BENCHMARK) $(TARGET_ORDERBOOK_BENCHMARK)
