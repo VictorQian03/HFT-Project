@@ -9,7 +9,7 @@
 std::vector<double> generate_price_data(size_t size) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::normal_distribution<double> dist(100.0, 10.0);  // Mean: 100, StdDev: 10
+    std::normal_distribution<double> dist(100.0, 10.0);  
 
     std::vector<double> prices(size);
     for (size_t i = 0; i < size; ++i) {
@@ -18,7 +18,6 @@ std::vector<double> generate_price_data(size_t size) {
     return prices;
 }
 
-// Run benchmark for a specific implementation
 double benchmark_implementation(
     const TimeSeriesProcessor& processor,
     const std::vector<double>& prices,
@@ -54,9 +53,6 @@ int main() {
     for (size_t size : test_sizes) {
         auto prices = generate_price_data(size);
         
-        // Warm up
-        processor.compute_moving_average_standard(prices);
-        processor.compute_moving_average_simd(prices);
         
         // Run benchmarks
         double standard_time = benchmark_implementation(processor, prices, false);

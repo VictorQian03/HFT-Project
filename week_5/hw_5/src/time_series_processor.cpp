@@ -37,18 +37,18 @@ std::vector<double> TimeSeriesProcessor::compute_moving_average_simd(
     const size_t result_size = prices.size() - window_size_ + 1;
     std::vector<double> result(result_size);
     
-    // Process each window
+
     for (size_t i = 0; i < result_size; ++i) {
         float64x2_t sum = vdupq_n_f64(0.0);
         size_t j = 0;
         
-        // Process pairs of elements using NEON
+       
         for (; j + 2 <= window_size_; j += 2) {
             float64x2_t window = vld1q_f64(&prices[i + j]);
             sum = vaddq_f64(sum, window);
         }
         
-        // Handle remaining elements
+
         double remaining_sum = 0.0;
         for (; j < window_size_; ++j) {
             remaining_sum += prices[i + j];

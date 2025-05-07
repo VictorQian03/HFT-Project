@@ -39,7 +39,7 @@ public:
     explicit OrderPriorityQueue(const Compare& comp = Compare())
         : compare_(comp) {}
 
-    // Core operations
+   
     void push(const T& value);
     void pop();
     const T& top() const;
@@ -47,7 +47,7 @@ public:
     size_t size() const { return heap_.size(); }
     void clear() { heap_.clear(); }
 
-    // Additional operations
+   
     void reserve(size_t capacity) { heap_.reserve(capacity); }
     const std::vector<T>& get_heap() const { return heap_; }
 
@@ -55,7 +55,7 @@ private:
     std::vector<T> heap_;
     Compare compare_;
 
-    // Helper functions
+
     void heapify_up(size_t index);
     void heapify_down(size_t index);
     size_t parent(size_t index) const { return (index - 1) / 2; }

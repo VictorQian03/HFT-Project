@@ -78,7 +78,7 @@ int main() {
             orders.emplace_back(price_dist(gen), timestamp_dist(gen), "ORDER" + std::to_string(i));
         }
 
-        // Run benchmarks
+       
         BenchmarkResult custom_avg = {0, 0};
         BenchmarkResult std_avg = {0, 0};
 
@@ -92,13 +92,13 @@ int main() {
             std_avg.pop_time_ms += std_result.pop_time_ms;
         }
 
-        // Calculate averages
+        
         custom_avg.push_time_ms /= num_trials;
         custom_avg.pop_time_ms /= num_trials;
         std_avg.push_time_ms /= num_trials;
         std_avg.pop_time_ms /= num_trials;
 
-        // Print results
+       
         std::cout << "Custom Priority Queue (avg over " << num_trials << " runs):\n"
                   << "  Push: " << custom_avg.push_time_ms << " ms\n"
                   << "  Pop:  " << custom_avg.pop_time_ms << " ms\n"
