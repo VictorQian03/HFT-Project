@@ -21,21 +21,32 @@ SOURCES_TEST = $(SRCDIR)/tests.cpp \
                $(SRCDIR)/optimized_orderbook.cpp 
 OBJECTS_TEST = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/test_%.o,$(SOURCES_TEST)) 
 
+TARGET_REALTIME = real_time_processor
+SOURCES_REALTIME = $(SRCDIR)/real_time_processing.cpp \
+                   $(SRCDIR)/orderbook.cpp \
+                   $(SRCDIR)/optimized_orderbook.cpp
+OBJECTS_REALTIME = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/rt_%.o,$(SOURCES_REALTIME))
 
-.PHONY: all clean run_benchmarks run_tests
+.PHONY: all clean run_benchmarks run_tests run_realtime
 
-all: $(TARGET_BENCHMARK) $(TARGET_TEST)
+all: $(TARGET_BENCHMARK) $(TARGET_TEST) $(TARGET_REALTIME)
 
 $(TARGET_BENCHMARK): $(OBJECTS_BENCHMARK)
-	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS) # Use RELEASE for benchmarks
+	$(CXX) $(CXXFLAGS_RELEASE) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS_RELEASE) -c $< -o $@
 
 $(TARGET_TEST): $(OBJECTS_TEST)
-	$(CXX) $(CXXFLAGS_DEBUG) -o $@ $^ $(LDFLAGS) # Use DEBUG for tests
+	$(CXX) $(CXXFLAGS_DEBUG) -o $@ $^ $(LDFLAGS)
 
-$(OBJDIR)/test_%.o: $(SRCDIR)/%.cpp | $(OBJDIR) 
+$(OBJDIR)/test_%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
+	$(CXX) $(CXXFLAGS_DEBUG) -c $< -o $@
+
+$(TARGET_REALTIME): $(OBJECTS_REALTIME)
+	$(CXX) $(CXXFLAGS_DEBUG) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/rt_%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS_DEBUG) -c $< -o $@
 
 $(OBJDIR):
@@ -47,5 +58,8 @@ run_benchmarks: $(TARGET_BENCHMARK)
 run_tests: $(TARGET_TEST)
 	./$(TARGET_TEST)
 
+run_realtime: $(TARGET_REALTIME)
+	./$(TARGET_REALTIME)
+
 clean:
-	rm -rf $(OBJDIR) $(TARGET_BENCHMARK) $(TARGET_TEST)
+	rm -rf $(OBJDIR) $(TARGET_BENCHMARK) $(TARGET_TEST) $(TARGET_REALTIME)
