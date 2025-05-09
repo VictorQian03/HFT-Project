@@ -66,8 +66,8 @@ void print_avg(const std::string& label, const std::vector<Result>& results) {
 }
 
 int main() {
-    std::vector<size_t> test_sizes = { 1000000, 10000000};
-    constexpr int num_trials = 10;
+    std::vector<size_t> test_sizes = { 100000,1000000, 10000000};
+    constexpr int num_trials = 5;
 
     for (size_t N : test_sizes) {
         std::cout << "\n=== Benchmark for N = " << N << " ===\n";
@@ -85,7 +85,7 @@ int main() {
             std::uniform_real_distribution<> val_dist(1.0, 1000.0);
 
             for (size_t i = 0; i < N; ++i) {
-                std::string sym(3, ' ');  // Generate 3-letter symbols
+                std::string sym(5, ' ');  // Generate 3-letter symbols
                 for (auto& c : sym) c = char_dist(gen);
                 keys.push_back(sym);
                 values.push_back(val_dist(gen));

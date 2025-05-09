@@ -29,7 +29,8 @@ OBJECTS_TS_BENCHMARK = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_TS_BEN
 # Order Book Benchmark
 TARGET_ORDERBOOK_BENCHMARK = orderbook_benchmark_app
 SOURCES_ORDERBOOK_BENCHMARK = $(SRCDIR)/orderbook_benchmark.cpp \
-                              $(SRCDIR)/optimized_orderbook.cpp
+                              $(SRCDIR)/optimized_orderbook.cpp\
+							   $(SRCDIR)/unoptimized_orderbook.cpp
 OBJECTS_ORDERBOOK_BENCHMARK = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_ORDERBOOK_BENCHMARK))
 
 .PHONY: all clean run_hash_benchmark run_pq_benchmark run_ts_benchmark run_orderbook_benchmark

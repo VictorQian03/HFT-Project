@@ -26,7 +26,7 @@ private:
     std::vector<Entry> table;
     size_t num_elements;
     size_t capacity;
-    float max_load_factor = 0.85f;
+    float max_load_factor = 0.7f;
 
     size_t hash(const Key& key) const;
     void rehash();
