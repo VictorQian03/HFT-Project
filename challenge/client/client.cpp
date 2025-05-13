@@ -17,6 +17,8 @@
 using boost::asio::ip::udp;
 using boost::asio::ip::tcp;
 using boost::asio::ip::make_address;
+boost::asio::io_context io_context;
+std::shared_ptr<boost::asio::ip::tcp::socket> persistent_tcp;
 
 const std::string MULTICAST_ADDRESS = "239.255.0.1";
 const unsigned short MULTICAST_PORT = 3001;
@@ -31,7 +33,6 @@ int current_challenge_id = -1;
 std::string current_target_ticker;
 std::mutex data_mutex; 
 
-boost::asio::io_context io_context;
 udp::socket udp_socket(io_context);
 boost::asio::streambuf udp_receive_buffer;
 udp::endpoint multicast_endpoint;
@@ -152,51 +153,33 @@ void process_udp_message(std::istream& is) {
     }
 }
 
-void send_tcp_response(int challenge_id, const std::string& ticker, double bid, double ask) {
-    auto socket = std::make_shared<tcp::socket>(io_context);
-    auto resolver = std::make_shared<tcp::resolver>(io_context);
-    resolver->async_resolve(SERVER_ADDRESS, std::to_string(SERVER_PORT),
-        [socket, resolver, challenge_id, ticker, bid, ask]( 
-            const boost::system::error_code& resolve_error,
-            tcp::resolver::results_type results) {
+void send_tcp_response(int challenge_id,
+                       const std::string& ticker,
+                       double bid,
+                       double ask) {
+    std::ostringstream message_stream;
+    message_stream << "CHALLENGE_RESPONSE "
+                   << challenge_id << " "
+                   << ticker << " "
+                   << std::fixed << std::setprecision(4) << bid << " "
+                   << std::fixed << std::setprecision(4) << ask << " "
+                   << TRADER_NAME << "\n";
 
-        if (!resolve_error) {
-            boost::asio::async_connect(*socket, results,
-                [socket, challenge_id, ticker, bid, ask]( 
-                    const boost::system::error_code& connect_error,
-                    const tcp::resolver::results_type::endpoint_type& endpoint) {
-
-                if (!connect_error) {
-                    std::cout << "[" << TRADER_NAME << "] TCP connected to " << endpoint << std::endl;
-
-                    std::ostringstream message_stream;
-                    message_stream << "CHALLENGE_RESPONSE "
-                                   << challenge_id << " "
-                                   << ticker << " "
-                                   << std::fixed << std::setprecision(4) << bid << " "
-                                   << std::fixed << std::setprecision(4) << ask << " "
-                                   << TRADER_NAME << "\n";
-
-                    auto message = std::make_shared<std::string>(message_stream.str()); 
-                    boost::asio::async_write(*socket, boost::asio::buffer(*message),
-                        [socket, message, challenge_id](
-                            const boost::system::error_code& write_error,
-                            size_t bytes_transferred) {
-
-                        if (!write_error) {
-                            std::cout << "[" << TRADER_NAME << "] TCP sent " << bytes_transferred << " bytes for challenge " << challenge_id << std::endl;
-                        } else {
-                            std::cerr << "[" << TRADER_NAME << "] TCP write error: " << write_error.message() << std::endl;
-                        }
-                    });
-                } else {
-                    std::cerr << "[" << TRADER_NAME << "] TCP connect error: " << connect_error.message() << std::endl;
-                }
-            });
-        } else {
-            std::cerr << "[" << TRADER_NAME << "] TCP resolve error: " << resolve_error.message() << std::endl;
+    auto msg = std::make_shared<std::string>(message_stream.str());
+    boost::asio::async_write(
+        *persistent_tcp,
+        boost::asio::buffer(*msg),
+        [msg, challenge_id](boost::system::error_code ec, std::size_t bytes) {
+            if (!ec) {
+                std::cout << "[" << TRADER_NAME << "] TCP sent "
+                          << bytes << " bytes for challenge "
+                          << challenge_id << "\n";
+            } else {
+                std::cerr << "[" << TRADER_NAME << "] TCP write error: "
+                          << ec.message() << std::endl;
+            }
         }
-    });
+    );
 }
 
 int main() {
@@ -214,6 +197,11 @@ int main() {
             )
         );
         udp_socket.set_option(boost::asio::ip::multicast::enable_loopback(true));
+        persistent_tcp = std::make_shared<tcp::socket>(io_context);
+        persistent_tcp->open(tcp::v4());
+        persistent_tcp->set_option(tcp::no_delay(true));
+        persistent_tcp->set_option(boost::asio::socket_base::keep_alive(true));
+        persistent_tcp->connect(tcp::endpoint(make_address(SERVER_ADDRESS), SERVER_PORT));
         std::cout << "[" << TRADER_NAME << "] Client started. Listening for multicast on "
                   << MULTICAST_ADDRESS << ":" << LISTEN_PORT
                   << ", sending TCP to " << SERVER_ADDRESS << ":" << SERVER_PORT << std::endl;
