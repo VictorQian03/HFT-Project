@@ -175,8 +175,11 @@ private:
                                 current_challenge.winner_declared = true;
                                 current_challenge.winner_name = client_name;
                                 current_challenge.first_response_time = std::chrono::steady_clock::now();
-
+                                auto elapsed = std::chrono::steady_clock::now() - current_challenge.first_response_time;
                                 std::cout << "🏆 Challenge " << challenge_id << " won by " << client_name << "!\n";
+                                std::cout << "Response time: "
+                                    << std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count()
+                                    << " ns\n";
                             }
                             }
 
