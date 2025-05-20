@@ -1,40 +1,22 @@
 CXX = g++
+CXXFLAGS = -std=c++20 -Wall -Wextra -pthread -O3 -g 
+BOOST_LIBS = -lboost_system 
+LDFLAGS = $(BOOST_LIBS)
 
-CXXSTD = -std=c++20
+all: client server
 
-BOOST_INCLUDE = /opt/homebrew/include
-BOOST_LIB = /opt/homebrew/lib
+client: client/client.o
+	$(CXX) $(CXXFLAGS) $^ -o client/client $(LDFLAGS)
 
-CXXFLAGS = $(CXXSTD) -I$(BOOST_INCLUDE) -O3 -Wall -Wextra 
+server: server/server.o
+	$(CXX) $(CXXFLAGS) $^ -o server/server $(LDFLAGS)
 
-LDFLAGS = -L$(BOOST_LIB)
+client/client.o: client/client.cpp client/ConcurrentQueue.h
+	$(CXX) $(CXXFLAGS) -c client/client.cpp -o $@
 
-LDLIBS = -lboost_system -lpthread
-
-SERVER_EXEC = server/hft_server
-CLIENT_EXEC = client/hft_client
-
-SERVER_SRC = server/main_server.cpp
-CLIENT_SRC = client/client.cpp
-
-.DEFAULT_GOAL := all
-
-.PHONY: all clean server client
-
-all: $(SERVER_EXEC) $(CLIENT_EXEC)
-
-$(SERVER_EXEC): $(SERVER_SRC)
-	@echo "Compiling server: $< -> $@"
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS)
-
-$(CLIENT_EXEC): $(CLIENT_SRC)
-	@echo "Compiling client: $< -> $@"
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) $(LDLIBS)
-
-server: $(SERVER_EXEC)
-client: $(CLIENT_EXEC)
+server/server.o: server/main_server.cpp
+	$(CXX) $(CXXFLAGS) -c server/main_server.cpp -o $@
 
 clean:
-	@echo "Cleaning..."
-	rm -f $(SERVER_EXEC) $(CLIENT_EXEC)
-	@echo "Clean complete."
+	rm -f client/client server/server client/*.o server/*.o
+	rm -f client/client_packet_latency_log.csv client/client_tcp_response_latency_log.csv server/server_events_log.csv

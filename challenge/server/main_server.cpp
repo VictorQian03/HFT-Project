@@ -39,7 +39,7 @@ Challenge generate_challenge(std::mt19937& gen, std::uniform_real_distribution<>
     std::vector<std::string> available_tickers;
 
     // Generate 10 securities
-    for (int i = 1; i <= 10; i++) {
+    for (int i = 1; i <= 1000; i++) {
         char ticker[10];
         std::snprintf(ticker, sizeof(ticker), "SEC%04d", i);
         double bid = bid_dist(gen);
@@ -108,7 +108,7 @@ void udp_broadcast_thread(boost::asio::io_context& io_context, unsigned short se
             std::cout << "Broadcasted challenge " << newChallenge.challenge_id
                       << " TARGET: " << newChallenge.target_ticker << std::endl;
 
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     } catch (std::exception& e) {
         std::cerr << "UDP Error: " << e.what() << std::endl;
