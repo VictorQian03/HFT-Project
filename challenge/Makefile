@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -pthread -O3 -g 
-BOOST_LIBS = -lboost_system 
+CXXFLAGS = -std=c++20 -Wall -Wextra -pthread -O3 -g -I/opt/homebrew/include
+BOOST_LIBS = -L/opt/homebrew/lib -lboost_system 
 LDFLAGS = $(BOOST_LIBS)
 
 all: client server

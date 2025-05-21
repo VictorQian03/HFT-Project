@@ -17,6 +17,8 @@
 #include <algorithm> 
 #include <fstream>  
 #include <csignal>   
+#include <string_view>
+#include <charconv>
 
 #include "ConcurrentQueue.h"
 
@@ -81,6 +83,31 @@ ConcurrentQueue<ClientTcpResponseLatencyRecord, LOG_QUEUE_CAPACITY> client_tcp_r
 
 std::ofstream packet_latency_log_stream;
 std::ofstream tcp_response_log_stream;
+
+struct SECUpdate {
+    std::string_view ticker;
+    double bid;
+    double ask;
+};
+
+struct ProcessingStats {
+    std::atomic<size_t> total_packets{0};
+    std::atomic<size_t> total_sec_updates{0};
+    std::atomic<size_t> total_challenges{0};
+    std::atomic<size_t> total_targets{0};
+    std::atomic<size_t> total_responses{0};
+    
+    void print_stats() {
+        std::cout << "Processing Stats:\n"
+                  << "  Total Packets: " << total_packets << "\n"
+                  << "  Total SEC Updates: " << total_sec_updates << "\n"
+                  << "  Total Challenges: " << total_challenges << "\n"
+                  << "  Total Targets: " << total_targets << "\n"
+                  << "  Total Responses: " << total_responses << "\n";
+    }
+};
+
+static ProcessingStats stats;
 
 void signal_handler(int signum);
 void start_udp_receive();
@@ -149,72 +176,80 @@ void worker_thread_function(int worker_id) {
 }
 
 void process_queued_message(int worker_id, const QueuedUDPPacket& packet_info) {
-    std::istringstream is(packet_info.data);
-    std::string line;
-
-    // 1) Local buffer for this fragment’s SEC updates
-    std::vector<std::pair<std::string,std::pair<double,double>>> sec_updates;
-
-    // 2) Flags + parsed values
+    stats.total_packets++;
+    
+    std::string_view data_view(packet_info.data);
+    std::vector<SECUpdate> sec_updates;
+    sec_updates.reserve(1000);
+    
     bool challenge_id_found = false;
-    bool target_found       = false;
-    int  parsed_challenge_id;
-    std::string parsed_target_ticker;
-    auto  parsed_time = std::chrono::high_resolution_clock::now();
-
-    // 3) First pass: just read & stash
-    while (std::getline(is, line)) {
-        if (line.rfind("SEC|", 0) == 0) {
-            std::stringstream ss(line);
-            std::string seg;
-            std::vector<std::string> f;
-            while (std::getline(ss, seg, '|')) f.push_back(seg);
-            if (f.size() == 6 && f[2]=="BID" && f[4]=="ASK") {
+    bool target_found = false;
+    int parsed_challenge_id = -1;
+    std::string_view parsed_target_ticker;
+    auto parsed_time = std::chrono::high_resolution_clock::now();
+    
+    size_t pos = 0;
+    while (pos < data_view.size()) {
+        size_t next_pos = data_view.find('\n', pos);
+        if (next_pos == std::string_view::npos) break;
+        
+        std::string_view line = data_view.substr(pos, next_pos - pos);
+        pos = next_pos + 1;
+        
+        if (line.starts_with("SEC|")) {
+            size_t ticker_start = 4;
+            size_t ticker_end = line.find('|', ticker_start);
+            if (ticker_end != std::string_view::npos) {
+                std::string_view ticker = line.substr(ticker_start, ticker_end - ticker_start);
+                
+                size_t bid_start = line.find("BID|", ticker_end) + 4;
+                size_t bid_end = line.find('|', bid_start);
+                
+                size_t ask_start = line.find("ASK|", bid_end) + 4;
+                
+                double bid, ask;
                 try {
-                    double bid = std::stod(f[3]);
-                    double ask = std::stod(f[5]);
-                    sec_updates.emplace_back(f[1], std::make_pair(bid,ask));
-                } catch(...) {  }
+                    bid = std::stod(std::string(line.substr(bid_start, bid_end - bid_start)));
+                    ask = std::stod(std::string(line.substr(ask_start)));
+                    sec_updates.push_back({ticker, bid, ask});
+                    stats.total_sec_updates++;
+                } catch (const std::exception&) {
+                    // Skip invalid numbers
+                }
             }
         }
-        else if (line.rfind("CHALLENGE_ID:",0)==0) {
-            try {
-                parsed_challenge_id = std::stoi(line.substr(13));
+        else if (line.starts_with("CHALLENGE_ID:")) {
+            if (std::from_chars(line.data() + 13, line.data() + line.size(), parsed_challenge_id).ec == std::errc()) {
                 challenge_id_found = true;
-            } catch(...) { }
+                stats.total_challenges++;
+            }
         }
-        else if (line.rfind("TARGET:",0)==0) {
+        else if (line.starts_with("TARGET:")) {
             parsed_target_ticker = line.substr(7);
             target_found = true;
+            stats.total_targets++;
         }
     }
-
     // 4) Now apply under lock
     {
         std::lock_guard<std::mutex> lock(client_data_mutex);
-
         // a) new challenge -> clear
-        if (challenge_id_found &&
-            parsed_challenge_id != current_challenge_id)
-        {
+        if (challenge_id_found && parsed_challenge_id != current_challenge_id) {
             current_market_data.clear();
             current_target_ticker.clear();
             current_challenge_id = parsed_challenge_id;
         }
-
         // b) apply all SEC updates from this fragment
-        for (auto &u : sec_updates) {
-            current_market_data[u.first] = u.second;
+        for (const auto& update : sec_updates) {
+            current_market_data[std::string(update.ticker)] = {update.bid, update.ask};
         }
-
         // c) record TARGET if seen
         if (target_found) {
-            current_target_ticker   = parsed_target_ticker;
+            current_target_ticker = std::string(parsed_target_ticker);
             current_target_parsed_time = parsed_time;
         }
     }
-
-    // 5) If we now have both a challenge and the target’s quote, respond:
+     // 5) If we now have both a challenge and the target’s quote, respond:
     if (current_challenge_id != -1 && !current_target_ticker.empty()) {
         auto it = current_market_data.find(current_target_ticker);
         if (it != current_market_data.end()) {
@@ -225,6 +260,7 @@ void process_queued_message(int worker_id, const QueuedUDPPacket& packet_info) {
                 it->second.second,
                 current_target_parsed_time
             );
+            stats.total_responses++;
             // reset for next challenge
             std::lock_guard<std::mutex> lock(client_data_mutex);
             current_market_data.clear();
@@ -460,6 +496,8 @@ int main() {
     if (packet_latency_log_stream.is_open()) packet_latency_log_stream.close();
     if (tcp_response_log_stream.is_open()) tcp_response_log_stream.close();
     std::cout << "[" << TRADER_NAME << "] Log files closed." << std::endl;
+
+    stats.print_stats();
 
     std::cout << "[" << TRADER_NAME << "] Client shut down gracefully." << std::endl;
     return 0;
