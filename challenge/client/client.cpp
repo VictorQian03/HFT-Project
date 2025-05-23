@@ -31,7 +31,7 @@ const unsigned short MULTICAST_PORT = 3001;
 const unsigned short LISTEN_PORT = 3001;
 const std::string SERVER_ADDRESS = "127.0.0.1";
 const unsigned short SERVER_PORT = 4000;
-const std::string TRADER_NAME = "Grand Master Oogway Logfu";
+const std::string TRADER_NAME = "VQ-AW-RX-JR";
 
 const size_t UDP_PACKET_QUEUE_CAPACITY = 8192;
 const unsigned int NUM_WORKER_THREADS = std::max(1u, std::thread::hardware_concurrency() / 2);
